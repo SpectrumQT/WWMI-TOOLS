@@ -26,7 +26,11 @@
 
 ## Assets  
 
-Already dumped and exported models will be located in [WWMI Assets](https://github.com/SpectrumQT/WWMI-Assets)
+Already dumped and exported models will be located in [WWMI Assets](https://github.com/SpectrumQT/WWMI-Assets) repository.
+
+## How To Use
+
+All fields and actions of the plugin have basic tooltips. Refer to [Modder Guide](https://github.com/SpectrumQT/WWMI-TOOLS/blob/main/guides/modder_guide.md) for more details.
 
 ## Installation
 
@@ -40,10 +44,6 @@ Already dumped and exported models will be located in [WWMI Assets](https://gith
 8. Tick checkbox named **Object: WWMI Tools** to enable addon
 
 ![wwmi-tools-installation](https://github.com/SpectrumQT/WWMI-TOOLS/blob/main/public-media/Installation.gif)
-
-## How To Use
-
-All fields and actions of the plugin have basic tooltips. Refer to basic [Modder Guide](https://github.com/SpectrumQT/WWMI-TOOLS/blob/main/guides/modder_guide.md) for more details.
 
 ## Resources
 
