@@ -10,8 +10,6 @@
   <a href="#license">License</a>
 </p>
 
-<h1></h1>
-
 ## Features  
 
 - **Frame Dump Data Extraction** — Fully automatic objects extraction from WuWa frame dumps
@@ -23,22 +21,24 @@
 
 ## Disclaimers  
 
--- **Alpha-1 Waring** — This is a first public alpha release, so you can expect all kinds of issues. Also, please keep in mind that WWMI feature set and formats are not set in stone and may be subject to change.
+- **Alpha-1 Waring** — This is a first public alpha release, so you can expect all kinds of issues. Also, please keep in mind that WWMI feature set and formats are not set in stone and may be subject to change.
 
 ## Installation
 
 1. Install [Blender 3.6 LTS](https://www.blender.org/download/lts/3-6) (**Blender 4.0+ is NOT supported yet**)
-2. Download the [latest release](https://github.com/SpectrumQT/WWMI-Tools/releases/latest) of WWMI-Tools-X.X.X.zip
-3. Open Blender, go to [Edit] -> [Preferences]
-4. Press [Install] button to open file selection window
+2. Download the [latest release](https://github.com/SpectrumQT/WWMI-Tools/releases/latest) of **WWMI-Tools-X.X.X.zip**
+3. Open Blender, go to **[Edit] -> [Preferences]**
+4. Press **[Install]** button to open file selection window
 5. Locate downloaded **WWMI-Tools-X.X.X.zip** and select it
-6. Press [Install Addon] button
-7. Start typing "WWMI" to filter in top-right corner
-8. Tick checkbox named "Object: WWMI Tools" to enable addon
+6. Press **[Install Addon]** button
+7. Start typing  **WWMI** to filter in top-right corner
+8. Tick checkbox named **Object: WWMI Tools** to enable addon
+
+![wwmi-tools-installation](https://github.com/SpectrumQT/WWMI-TOOLS/blob/main/public-media/Installation.gif)
 
 ## How To Use
 
-All fields and actions of the plugin have basic tooltips. Refer to basic [Modder Guide]() for more details.
+All fields and actions of the plugin have basic tooltips. Refer to basic [Modder Guide](https://github.com/SpectrumQT/WWMI-TOOLS/blob/main/guides/modder_guide.md) for more details.
 
 ## Resources
 
