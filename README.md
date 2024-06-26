@@ -4,6 +4,7 @@
 
 <p align="center">
   <a href="#features">Features</a> •
+  <a href="#assets">Assets</a> •
   <a href="#installation">Installation</a> •
   <a href="#how-to-use">How To Use</a> • 
   <a href="#resources">Resources</a> •
@@ -22,6 +23,10 @@
 ## Disclaimers  
 
 - **Alpha-1 Waring** — This is a first public alpha release, so you can expect all kinds of issues. Also, please keep in mind that WWMI feature set and formats are not set in stone and may be subject to change.
+
+## Assets  
+
+Already dumped and exported models will be located in [WWMI Assets](https://github.com/SpectrumQT/WWMI-Assets)
 
 ## Installation
 
@@ -43,6 +48,7 @@ All fields and actions of the plugin have basic tooltips. Refer to basic [Modder
 ## Resources
 
 - [WWMI](https://github.com/SpectrumQT/WWMI)
+- [WWMI Assets](https://github.com/SpectrumQT/WWMI-Assets)
 - [WWMI - Gamebanana](https://gamebanana.com/tools/17252)
 - [WWMI Tools - Gamebanana](https://gamebanana.com/tools/17289)
   
