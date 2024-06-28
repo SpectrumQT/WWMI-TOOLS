@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import bpy
 import bmesh
 
-from .collections import assert_collection
+from .collections import assert_collection, unhide_collection
 
 
 def assert_object(obj):
@@ -189,18 +189,37 @@ def copy_object(context, obj, name=None, collection=None):
         return new_obj
 
 
+def assert_vertex_group(obj, vertex_group):
+    obj = assert_object(obj)
+    if isinstance(vertex_group, bpy.types.VertexGroup):
+        vertex_group = vertex_group.name
+    return obj.vertex_groups[vertex_group]
+
+
+def get_vertex_groups(obj):
+    obj = assert_object(obj)
+    return obj.vertex_groups
+
+
+def remove_vertex_groups(obj, vertex_groups):
+    obj = assert_object(obj)
+    for vertex_group in vertex_groups:
+        obj.vertex_groups.remove(assert_vertex_group(obj, vertex_group))
+
+
 def normalize_all_weights(context, obj):
     with OpenObject(context, obj, mode='WEIGHT_PAINT') as obj:
         bpy.ops.object.vertex_group_normalize_all()
 
 
 def triangulate_object(context, obj):
-    with OpenObject(context, obj, mode='EDIT') as obj:
-        # bpy.ops.mesh.remove_doubles(threshold=0.0001)
+    with OpenObject(context, obj, mode='OBJECT') as obj:
         me = obj.data
-        bm = bmesh.from_edit_mesh(me)
-        bmesh.ops.triangulate(bm, faces=bm.faces)
-        bmesh.update_edit_mesh(me)
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bmesh.ops.triangulate(bm, faces=bm.faces[:])
+        bm.to_mesh(me)
+        bm.free()
 
 
 class OpenObjects:
@@ -233,5 +252,7 @@ class OpenObjects:
 def join_objects(context, objects):
     if len(objects) == 1:
         return
-    with OpenObjects(context, objects, mode='OBJECT'):
-        bpy.ops.object.join()
+    with OpenObject(context, objects[0], mode='OBJECT'):
+        for obj in objects[1:]:
+            select_object(obj)  
+            bpy.ops.object.join()

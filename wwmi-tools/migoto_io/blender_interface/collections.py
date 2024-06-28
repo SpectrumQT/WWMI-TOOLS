@@ -75,3 +75,12 @@ def unhide_collection(col):
     #    col.hide_viewport = False
     #    bpy.context.view_layer.layer_collection.children.get(col.name).hide_viewport = False
     get_layer_collection(col).hide_viewport = False
+
+
+def collection_is_hidden(col):
+    col = assert_collection(col)
+    return get_layer_collection(col).hide_viewport
+
+
+def get_scene_collections():
+    return bpy.context.scene.collection.children

@@ -111,7 +111,11 @@ def apply_modifiers_for_object_with_shape_keys(context, selectedModifiers, disab
 
     # Handle base shape in "originalObject"
     print("applyModifierForObjectWithShapeKeys: Applying base shape key")
-    bpy.ops.object.shape_key_remove(all=True)
+
+    # bpy.ops.object.shape_key_remove(all=True)
+    for k in originalObject.data.shape_keys.key_blocks:
+        originalObject.shape_key_remove(k)
+
     for modifierName in selectedModifiers:
         bpy.ops.object.modifier_apply(modifier=modifierName)
     vertCount = len(originalObject.data.vertices)
@@ -131,7 +135,10 @@ def apply_modifiers_for_object_with_shape_keys(context, selectedModifiers, disab
         # Copy temp object.
         bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(0, 0, 0), "orient_type":'GLOBAL', "orient_matrix":((1, 0, 0), (0, 1, 0), (0, 0, 1)), "orient_matrix_type":'GLOBAL', "constraint_axis":(False, False, False), "mirror":True, "use_proportional_edit":False, "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "use_proportional_connected":False, "use_proportional_projected":False, "snap":False, "snap_target":'CLOSEST', "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "cursor_transform":False, "texture_space":False, "remove_on_cancel":False, "release_confirm":False, "use_accurate":False})
         tmpObject = context.view_layer.objects.active
-        bpy.ops.object.shape_key_remove(all=True)
+        # bpy.ops.object.shape_key_remove(all=True)
+        for k in tmpObject.data.shape_keys.key_blocks:
+            tmpObject.shape_key_remove(k)
+
         copyObject.select_set(True)
         copyObject.active_shape_key_index = i
         

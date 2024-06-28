@@ -7,6 +7,9 @@ import shutil
 from pathlib import Path
 from typing import Dict
 from dataclasses import dataclass
+from collections import OrderedDict
+
+from ..migoto_io.blender_interface.utility import *
 
 from ..migoto_io.buffers.dxgi_format import DXGIFormat
 from ..migoto_io.buffers.byte_buffer import BufferElementLayout, BufferSemantic, AbstractSemantic, Semantic, ByteBuffer
@@ -199,8 +202,13 @@ def write_objects(output_directory, objects):
         object_directory = output_directory / object_name
         object_directory.mkdir(parents=True, exist_ok=True)
 
+        textures = {}
+        texture_usage = {}
+        
         for component_id, component in enumerate(object_data.components):
-            component_filename = f'Component_{component_id}'
+
+            component_filename = f'Component {component_id}'
+
             # Write buffers
             with open(object_directory / f'{component_filename}.ib', "wb") as f:
                 f.write(component.ib)
@@ -208,14 +216,37 @@ def write_objects(output_directory, objects):
                 f.write(component.vb)
             with open(object_directory / f'{component_filename}.fmt', "w") as f:
                 f.write(component.fmt)
+
             # Write textures
+            texture_usage[component_filename] = OrderedDict()
             for texture in component.textures:
+
+                if texture.hash not in textures:
+                    textures[texture.hash] = {
+                        'path': texture.path,
+                        'components': []
+                    }
+
+                textures[texture.hash]['components'].append(str(component_id))
+
+                if texture.get_slot() not in texture_usage[component_filename]:
+                    texture_usage[component_filename][texture.get_slot()] = []
+
                 shaders = '-'.join([shader.raw for shader in texture.shaders])
-                new_path = object_directory / f'{component_filename}-{texture.get_slot_hash()}-{shaders}.{texture.ext}'
-                shutil.copyfile(texture.path, new_path)
+                texture_usage[component_filename][texture.get_slot()].append(f'{texture.hash}-{shaders}')
+                
+            texture_usage[component_filename] = OrderedDict(sorted(texture_usage[component_filename].items()))
+
+        for texture_hash, texture in textures.items():
+            path = Path(texture['path'])
+            components = '-'.join(sorted(list(set(texture['components']))))
+            shutil.copyfile(path, object_directory / f'Components-{components} t={texture_hash}{path.suffix}')
+            
+        with open(object_directory / f'TextureUsage.json', "w") as f:
+            f.write(json.dumps(texture_usage, indent=4))
 
         with open(object_directory / f'Metadata.json', "w") as f:
-            f.write(json.dumps(object_data.metadata, indent=4))
+            f.write(object_data.metadata)
 
 
 def extract_frame_data(cfg):
@@ -224,7 +255,7 @@ def extract_frame_data(cfg):
     
     # Create data model of the frame dump
     dump = Dump(
-        dump_directory=Path(cfg.frame_dump_folder)
+        dump_directory=resolve_path(cfg.frame_dump_folder)
     )
 
     # Get data view from dump data model
@@ -264,7 +295,7 @@ def extract_frame_data(cfg):
         )
     )
 
-    write_objects(Path(cfg.extract_output_folder), output_builder.objects)
+    write_objects(resolve_path(cfg.extract_output_folder), output_builder.objects)
 
     print(f"Execution time: %s seconds" % (time.time() - start_time))
 

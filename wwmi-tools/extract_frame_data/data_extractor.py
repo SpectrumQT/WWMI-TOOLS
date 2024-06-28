@@ -142,6 +142,10 @@ class DataExtractor:
             if pose_cs_cb_format == PoseConstantBufferFormat.static and cb_format == PoseConstantBufferFormat.animated:
                 continue
 
+            # Skip STATIC_POSE_CS calls that were misidentified as ANIMATED_POSE_CS calls due to same IO pattern
+            # if pose_cs_cb_format == PoseConstantBufferFormat.animated and cb_format == PoseConstantBufferFormat.static:
+            #     continue
+
             if cb_format != pose_cs_cb_format:
                 raise ValueError(f'CB format mismatch for {call_branch.shader_id} call {branch_call}')
 

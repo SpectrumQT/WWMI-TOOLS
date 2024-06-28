@@ -1,5 +1,4 @@
 import json
-import re
 import time
 import shutil
 
@@ -10,6 +9,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from datetime import datetime
 
+from ..migoto_io.blender_interface.utility import *
 from ..migoto_io.blender_interface.collections import *
 from ..migoto_io.blender_interface.objects import *
 from ..migoto_io.blender_interface.mesh import *
@@ -17,9 +17,11 @@ from ..migoto_io.blender_interface.mesh import *
 from ..migoto_io.buffers.dxgi_format import DXGIFormat
 from ..migoto_io.buffers.byte_buffer import ByteBuffer, BufferElementLayout, BufferSemantic, AbstractSemantic, Semantic
 
-from ..migoto_io.blender_tools.modifiers import apply_modifiers_for_object_with_shape_keys
+from ..extract_frame_data.metadata_format import read_metadata
 
-from .metadata_collector import MetadataCollector, TempObject, ModInfo, Version
+from .object_merger import ObjectMerger
+from .metadata_collector import Version, ModInfo
+from .texture_collector import Texture, get_textures
 from .ini_maker import IniMaker, is_ini_edited
 
 
@@ -104,74 +106,6 @@ def get_default_data_map():
             ],
         },
     )
-
-
-@dataclass
-class ObjectMerger():
-    # Input
-    apply_modifiers: bool
-    context: bpy.context
-    collection: str
-    # Output
-    merged_object: bpy.types.Object = field(init=False)
-    merged_objects: Dict[int, List[TempObject]] = field(init=False)
-
-    def __post_init__(self):
-        self.merged_objects = {}
-
-        objects = get_collection_objects(self.collection)
-
-        temp = []
-
-        components = {}
-
-        component_pattern = re.compile(r'.*(?:component|part)[_ -]*(\d+).*')
-        
-        for obj in objects:
-            if obj.name.startswith('TEMP_'):
-                continue
-            
-            match = component_pattern.findall(obj.name.lower())
-            if len(match) == 0:
-                continue
-            component_id = int(match[0])
-
-            if component_id not in components:
-                components[component_id] = []
-
-            components[component_id].append(obj)
-
-        for component_id in sorted(components):
-
-            objects = components[component_id]
-            objects.sort(key=lambda x: x.name)
-
-            for obj in objects:
-
-                temp_obj = copy_object(self.context, obj, name=f'TEMP_{obj.name}', collection=self.collection)
-
-                if self.apply_modifiers:
-                    with OpenObject(self.context, temp_obj) as obj:
-                        selected_modifiers = [modifier.name for modifier in get_modifiers(obj)]
-                        apply_modifiers_for_object_with_shape_keys(self.context, selected_modifiers, None)
-
-                triangulate_object(self.context, temp_obj)
-                
-                if component_id not in self.merged_objects:
-                    self.merged_objects[component_id] = []
-                    
-                self.merged_objects[component_id].append(TempObject(
-                    name=obj.name,
-                    index_count=len(temp_obj.data.polygons) * 3,
-                ))
-
-                temp.append(temp_obj)
-
-        join_objects(self.context, temp)
-
-        self.merged_object = temp[0]
-
-        rename_object(self.merged_object, 'TEMP_EXPORT_OBJECT')
 
 
 def extract_semantic_data(data_map, loop_data, vertex_data):
@@ -327,28 +261,34 @@ def blender_export(operator, context, cfg, data_map):
 
     user_context = get_user_context(context)
 
+    object_source_folder = resolve_path(cfg.object_source_folder)
+    mod_output_folder = resolve_path(cfg.mod_output_folder)
+    meshes_path = mod_output_folder / 'Meshes'
+    meshes_path.mkdir(parents=True, exist_ok=True)
+    textures_path = mod_output_folder / 'Textures'
+    textures_path.mkdir(parents=True, exist_ok=True)
+    local_mod_logo_path = textures_path / 'Logo.dds'
+
+    extracted_object = read_metadata(object_source_folder / 'Metadata.json')
+
     # Prepare merged temp object
 
     object_merger = ObjectMerger(
+        extracted_object=extracted_object,
         apply_modifiers=cfg.apply_all_modifiers,
         context=context,
         collection=cfg.component_collection
     )
-
-    obj = object_merger.merged_object
-    normalize_all_weights(context, obj)
-
-    mesh = obj.evaluated_get(context.evaluated_depsgraph_get()).to_mesh()
-    
-    mesh.calc_tangents()
-    mesh.flip_normals()
-    mesh.calc_tangents()
+    merged_object = object_merger.merged_object
+    obj = merged_object.object
+    mesh = merged_object.mesh
 
     # Collect merged temp object data
 
     faces, loop_data, vertex_data = get_mesh_data(context, mesh, data_map, cfg.component_collection)
 
     shapekey_offsets, shapekey_vertex_ids, shapekey_vertex_offsets = get_shapekey_data(obj, mesh, data_map, loop_data)
+    merged_object.shapekeys.vertex_count = len(shapekey_vertex_ids) if shapekey_vertex_ids is not None else 0
 
     vertex_count = len(loop_data)
 
@@ -356,34 +296,13 @@ def blender_export(operator, context, cfg, data_map):
 
     # Write output
 
-    object_source_folder = Path(bpy.path.abspath(cfg.object_source_folder))
-    mod_output_folder = Path(bpy.path.abspath(cfg.mod_output_folder))
-
     if not cfg.partial_export:
-        textures_path = mod_output_folder / 'Textures'
-        textures_path.mkdir(parents=True, exist_ok=True)
-
-        mod_logo_path = Path(bpy.path.abspath(cfg.mod_logo))
-        local_mod_logo_path = textures_path / 'Logo.dds'
+        mod_logo_path = resolve_path(cfg.mod_logo)
         if mod_logo_path.is_file():
             shutil.copy(mod_logo_path, local_mod_logo_path)
-
-        metadata_collector = MetadataCollector(
-            mod_info=ModInfo(
-                wwmi_tools_version=Version(cfg.wwmi_tools_version),
-                required_wwmi_version=Version(cfg.required_wwmi_version),
-                mod_name=cfg.mod_name,
-                mod_author=cfg.mod_author,
-                mod_desc=cfg.mod_desc,
-                mod_link=cfg.mod_link,
-                mod_logo=mod_logo_path,
-            ),
-            object_source_folder=object_source_folder,
-            merged_objects=object_merger.merged_objects,
-            custom_vertex_count=vertex_count,
-            custom_index_count=len(faces),
-            custom_shapekey_vertex_count=len(shapekey_vertex_ids) if shapekey_vertex_ids is not None else 0,
-        )
+    
+    if not cfg.partial_export:
+        textures = get_textures(object_source_folder)
 
     if cfg.write_ini and not cfg.partial_export:
 
@@ -394,11 +313,20 @@ def blender_export(operator, context, cfg, data_map):
             ini_path.rename(ini_path.with_name(f'{ini_path.name} {timestamp}.BAK'))
 
         ini_maker = IniMaker(
-            mod_info=metadata_collector.mod_info,
-            mesh_object=metadata_collector.mesh_object,
-            shapekeys=metadata_collector.shapekeys,
+            mod_info=ModInfo(
+                wwmi_tools_version=Version(cfg.wwmi_tools_version),
+                required_wwmi_version=Version(cfg.required_wwmi_version),
+                mod_name=cfg.mod_name,
+                mod_author=cfg.mod_author,
+                mod_desc=cfg.mod_desc,
+                mod_link=cfg.mod_link,
+                mod_logo=local_mod_logo_path,
+            ),
+            extracted_object=extracted_object,
+            merged_object=merged_object,
+            output_vertex_count=vertex_count,
             buffers=buffers,
-            textures=metadata_collector.textures,
+            textures=textures,
             comment_code=cfg.comment_ini,
         )
 
@@ -406,14 +334,12 @@ def blender_export(operator, context, cfg, data_map):
             f.write(ini_maker.build())
 
     if cfg.copy_textures and not cfg.partial_export:
-        for texture in metadata_collector.textures:
+        for texture in textures:
             texture_path = textures_path / texture.filename
             if texture_path.is_file():
                 continue
             shutil.copy(texture.path, texture_path)
 
-    meshes_path = mod_output_folder / 'Meshes'
-    meshes_path.mkdir(parents=True, exist_ok=True)
     for buffer_name, buffer in buffers.items():
         with open(meshes_path / f'{buffer_name}.buf', "wb") as f:
             f.write(buffer.get_bytes())

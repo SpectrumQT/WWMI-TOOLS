@@ -11,6 +11,7 @@ from ..migoto_io.dump_parser.filename_parser import ResourceDescriptor
 
 from .shapekey_builder import ShapeKeys
 from .component_builder import MeshObject
+from .metadata_format import ExtractedObject, ExtractedObjectComponent, ExtractedObjectShapeKeys
 
 
 @dataclass
@@ -30,7 +31,7 @@ class ComponentData:
 
 @dataclass
 class ObjectData:
-    metadata: dict
+    metadata: str
     components: List[ComponentData]
 
 
@@ -112,32 +113,35 @@ class OutputBuilder:
 
     @staticmethod
     def build_metadata(mesh_object, shapekeys):
-        return {
-            'ib_hash': mesh_object.ib_hash,
-            'vb0_hash': mesh_object.vb0_hash,
-            'vb1_hash': mesh_object.vb1_hash,
-            'vertex_count': mesh_object.vertex_count,
-            'index_count': mesh_object.index_count,
-            'components': [
-                {
-                    'dispatch_x': component.dispatch_x,
-                    'vertex_offset': component.vertex_offset,
-                    'vertex_count': component.vertex_count,
-                    'index_offset': component.index_offset,
-                    'index_count': component.index_count,
-                    'vg_offset': component.vg_offset,
-                    'vg_count': component.vg_count,
+        return ExtractedObject(
 
-                } for component in mesh_object.components
+            ib_hash=mesh_object.ib_hash,
+            vb0_hash=mesh_object.vb0_hash,
+            vb1_hash=mesh_object.vb1_hash,
+            vertex_count=mesh_object.vertex_count,
+            index_count=mesh_object.index_count,
+
+            components=[
+                ExtractedObjectComponent(
+                    dispatch_x=component.dispatch_x,
+                    vertex_offset=component.vertex_offset,
+                    vertex_count=component.vertex_count,
+                    index_offset=component.index_offset,
+                    index_count=component.index_count,
+                    vg_offset=component.vg_offset,
+                    vg_count=component.vg_count,
+                ) for component in mesh_object.components
             ],
-            'shapekeys': {
-                'offsets_hash': shapekeys.offsets_hash,
-                'scale_hash': shapekeys.scale_hash,
-                'vertex_count': shapekeys.shapekey_offsets[-1] - 1,
-                'dispatch_y': shapekeys.dispatch_y,
-                'checksum': sum(shapekeys.shapekey_offsets[0:4]),
-            } if shapekeys is not None else {}
-        }
+
+            shapekeys=ExtractedObjectShapeKeys(
+                offsets_hash=shapekeys.offsets_hash,
+                scale_hash=shapekeys.scale_hash,
+                vertex_count=shapekeys.shapekey_offsets[-1] - 1,
+                dispatch_y=shapekeys.dispatch_y,
+                checksum=sum(shapekeys.shapekey_offsets[0:4]),
+            ) if shapekeys is not None else ExtractedObjectShapeKeys()
+            
+        ).as_json()
 
     @staticmethod
     def build_fmt(vb, ib):

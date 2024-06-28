@@ -47,10 +47,9 @@ All fields and actions of the plugin have basic tooltips. Refer to [Modder Guide
 
 ## Resources
 
-- [WWMI](https://github.com/SpectrumQT/WWMI)
+- [WWMI GitHub](https://github.com/SpectrumQT/WWMI) ([Mirror: Gamebanana](https://gamebanana.com/tools/17252))
+- [WWMI Tools GitHub (you're here)] ([Mirror: Gamebanana](https://gamebanana.com/tools/17289))
 - [WWMI Assets](https://github.com/SpectrumQT/WWMI-Assets)
-- [WWMI - Gamebanana](https://gamebanana.com/tools/17252)
-- [WWMI Tools - Gamebanana](https://gamebanana.com/tools/17289)
   
 ## License
 

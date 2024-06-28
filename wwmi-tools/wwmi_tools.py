@@ -110,6 +110,12 @@ class WWMI_Settings(bpy.types.PropertyGroup):
         subtype="DIR_PATH",
     ) # type: ignore
 
+    mirror_mesh: BoolProperty(
+        name="Mirror Mesh",
+        description="Automatically mirror mesh to match in-game position",
+        default=True,
+    ) # type: ignore
+
     ########################################
     # Mod Export
     ########################################
@@ -258,22 +264,7 @@ class WWMI_Import(bpy.types.Operator):
     def execute(self, context):
         try:
             cfg = context.scene.wwmi_tools_settings
-
-            object_source_folder = Path(cfg.object_source_folder)
-
-            col = new_collection(object_source_folder.stem)
-
-            for filename in os.listdir(object_source_folder):
-                if not filename.endswith('fmt'):
-                    continue
-
-                fmt_path = object_source_folder / filename
-                ib_path = fmt_path.with_suffix('.ib')
-                vb_path = fmt_path.with_suffix('.vb')
-
-                obj = blender_import(self, context, fmt_path, fmt_path, vb_path=vb_path, ib_path=ib_path)
-
-                link_object_to_collection(obj, col)
+            blender_import(self, context, cfg)
 
         except ValueError as e:
             self.report({'ERROR'}, str(e))
@@ -359,9 +350,15 @@ class WWMI_Export(bpy.types.Operator):
 
             return default_data_map
 
+    def verify_collection(self, context):
+        cfg = context.scene.wwmi_tools_settings
+        if not cfg.component_collection.name in get_scene_collections():
+            raise ValueError(f'Collection "{cfg.component_collection.name}" must be a member of "Scene Collection"!')
+
     def execute(self, context):
         try:
             cfg = context.scene.wwmi_tools_settings
+            self.verify_collection(context)
 
             data_map = self.get_data_map(context)
 
@@ -606,6 +603,7 @@ class WWMI_TOOLS_PT_UI_PANEL(bpy.types.Panel):
         layout.row()
 
         layout.row().prop(cfg, 'object_source_folder')
+        layout.row().prop(cfg, 'mirror_mesh')
 
         layout.row()
 

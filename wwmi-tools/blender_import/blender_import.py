@@ -2,12 +2,16 @@ import os
 import math
 import struct
 import itertools
+import time
+from pathlib import Path
 
 from array import array
 
 import bpy
 from bpy_extras.io_utils import unpack_list, axis_conversion
 
+from ..migoto_io.blender_interface.utility import *
+from ..migoto_io.blender_interface.collections import *
 from ..migoto_io.blender_interface.objects import *
 
 from .buffers import VertexBuffer, IndexBuffer
@@ -376,7 +380,7 @@ def import_vertices(mesh, vb, flip_normal=False):
     return (blend_indices, blend_weights, texcoords, vertex_layers, use_normals, shapekeys)
 
 
-def import_3dmigoto_vb_ib(operator, context, paths, flip_texcoord_v=True, axis_forward='-Y', axis_up='Z'):
+def import_3dmigoto_vb_ib(operator, context, cfg, paths, flip_texcoord_v=True, axis_forward='-Y', axis_up='Z'):
     vb, ib, name, pose_path = load_3dmigoto_mesh(operator, paths)
 
     name = name.split('.')[0]
@@ -427,24 +431,33 @@ def import_3dmigoto_vb_ib(operator, context, paths, flip_texcoord_v=True, axis_f
     else:
         mesh.calc_normals()
 
-    link_object_to_scene(context, obj)
-    select_object(obj)
-    set_active_object(context, obj)
-    
-    set_mode(context, 'OBJECT')
-
-    # obj.rotation_euler[0] = math.radians(0)
-    # obj.rotation_euler[2] = math.radians(180)
-    obj.scale = 0.01, 0.01, 0.01
-
-    unlink_object_from_scene(context, obj)
-
     return obj
 
 
-def blender_import(operator, context, vb_fmt_path, ib_fmt_path, vb_path=None, ib_path=None):
-    try:
-        return import_3dmigoto_vb_ib(operator, context, [((vb_path, vb_fmt_path), (ib_path, ib_fmt_path), True, None)])
-    except Fatal as e:
-        operator.report({'ERROR'}, str(e))
-        
+def blender_import(operator, context, cfg):
+    
+    object_source_folder = resolve_path(cfg.object_source_folder)
+
+    col = new_collection(object_source_folder.stem)
+
+    for filename in os.listdir(object_source_folder):
+        if not filename.endswith('fmt'):
+            continue
+
+        fmt_path = object_source_folder / filename
+        ib_path = fmt_path.with_suffix('.ib')
+        vb_path = fmt_path.with_suffix('.vb')
+
+        obj = import_3dmigoto_vb_ib(operator, context, cfg, [((vb_path, fmt_path), (ib_path, fmt_path), True, None)])
+
+        link_object_to_collection(obj, col)
+    
+        with OpenObject(context, obj, 'OBJECT'):
+
+            # obj.rotation_euler[0] = math.radians(0)
+            # obj.rotation_euler[2] = math.radians(180)
+
+            if cfg.mirror_mesh:
+                obj.scale = -0.01, 0.01, 0.01
+            else:
+                obj.scale = 0.01, 0.01, 0.01
