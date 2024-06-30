@@ -19,7 +19,7 @@ from ..migoto_io.buffers.byte_buffer import ByteBuffer, BufferElementLayout, Buf
 
 from ..extract_frame_data.metadata_format import read_metadata
 
-from .object_merger import ObjectMerger
+from .object_merger import ObjectMerger, SkeletonType
 from .metadata_collector import Version, ModInfo
 from .texture_collector import Texture, get_textures
 from .ini_maker import IniMaker, is_ini_edited
@@ -76,8 +76,10 @@ def get_default_data_map():
                 BufferSemantic(AbstractSemantic(Semantic.Position, 0), DXGIFormat.R32_FLOAT, stride=12)
             ],
             'Blend': [
-                BufferSemantic(AbstractSemantic(Semantic.Blendindices, 0), DXGIFormat.R32G32B32A32_UINT),
-                BufferSemantic(AbstractSemantic(Semantic.Blendweight, 0), DXGIFormat.R32G32B32A32_FLOAT),
+                # BufferSemantic(AbstractSemantic(Semantic.Blendindices, 0), DXGIFormat.R32G32B32A32_UINT),
+                # BufferSemantic(AbstractSemantic(Semantic.Blendweight, 0), DXGIFormat.R32G32B32A32_FLOAT),
+                BufferSemantic(AbstractSemantic(Semantic.Blendindices, 0), DXGIFormat.R8_UINT, stride=4),
+                BufferSemantic(AbstractSemantic(Semantic.Blendweight, 0), DXGIFormat.R8G8B8A8_UNORM),
             ],
             'Vector': [
                 BufferSemantic(AbstractSemantic(Semantic.Tangent, 0), DXGIFormat.R8G8B8A8_SNORM),
@@ -277,7 +279,8 @@ def blender_export(operator, context, cfg, data_map):
         extracted_object=extracted_object,
         apply_modifiers=cfg.apply_all_modifiers,
         context=context,
-        collection=cfg.component_collection
+        collection=cfg.component_collection,
+        skeleton_type=SkeletonType.Merged if cfg.mod_skeleton_type == 'MERGED' else SkeletonType.PerComponent,
     )
     merged_object = object_merger.merged_object
     obj = merged_object.object

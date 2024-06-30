@@ -19,7 +19,18 @@
 2. Select Mode: **Extract Objects From Dump**
 3. Configure **Frame Dump** field: input path to dump data folder **FrameAnalysis-DATETIME**
 4. Configure **Output Folder** filed: input path to folder where you want to store extracted objects 
-5. Press **[Extract Objects From Dump]** button
+5. Configure **Skeleton** selection:
+    * **Merged**
+        * Features: Imported mesh will have unified list of Vertex Groups, allowing to weight any vertex of any component to any bone.
+        * Mod Upsides: Easy to weight, advanced weighting support (i.e. long hair to cape).
+        * Mod Downsides: Model will be updated with 1 frame delay, mod will pause while there are more than one of same modded object on screen.
+        * Suggested Usage: New modders, character or echo mods with complex weights.
+    * **Per-Component** 
+        * Features: Imported mesh will have its Vertex Groups split into per component lists, restricting weighting of any vertex only to its parent component.
+        * Mod Upsides: No 1-frame delay for model updates, minor performance gain.
+        * Mod Downsides: Hard to weight, very limited weighting options.
+        * Suggested Usage: Weapon mods, simple character edits and retextures.
+6. Press **[Extract Objects From Dump]** button
 Extracted object will be placed in separate folders named after VB0 hash parsed from the shader calls. Feel free to fiddle with Texture Filtering options, they indented to filter out garbage textures set by the game but aren't actually used by relevant shaders.
 
 ![frame-data-collection](https://github.com/SpectrumQT/WWMI-TOOLS/blob/main/public-media/Frame%20Data%20Collection.gif)
@@ -78,8 +89,11 @@ Imported object components will appear as hash-named collection of Blender objec
 4. Configure **Components** field: Select collection with objects for desired components. Skipping arbitrary components is supported, just remove relevant objects from collection. They won't appear in the game.
 5. Configure **Object Sources** field: input path to hash-named folder containing object data.
 6. Configure **Mod Folder** field: input path where you want the exported mod data to be located.
-7. Configure optional mod info fields.
-8. Press **[Export Mod]**
+7. Configure **Skeleton** selection: select the same type that was used for import
+    * Merged: Mesh with this skeleton should have unified list of Vertex Groups.
+    * Per-Component: Mesh with this skeleton should have its Vertex Groups split into per-component lists.
+8. Configure optional mod info fields.
+9. Press **[Export Mod]**
  
 ![wwmi-mod-export](https://github.com/SpectrumQT/WWMI-TOOLS/blob/main/public-media/Mod%20Export.gif)
 

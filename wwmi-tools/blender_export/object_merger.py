@@ -2,6 +2,7 @@ import re
 
 from typing import List, Dict, Union
 from dataclasses import dataclass, field
+from enum import Enum
 
 from ..migoto_io.blender_interface.collections import *
 from ..migoto_io.blender_interface.objects import *
@@ -9,6 +10,11 @@ from ..migoto_io.blender_interface.objects import *
 from ..migoto_io.blender_tools.modifiers import apply_modifiers_for_object_with_shape_keys
 
 from ..extract_frame_data.metadata_format import ExtractedObject
+
+
+class SkeletonType(Enum):
+    Merged = 'Merged'
+    PerComponent = 'Per-Component'
 
 
 @dataclass
@@ -38,8 +44,10 @@ class MergedObject:
     mesh: bpy.types.Mesh
     components: List[MergedObjectComponent]
     shapekeys: MergedObjectShapeKeys
+    skeleton_type: SkeletonType
     vertex_count: int = 0
     index_count: int = 0
+    vg_count: int = 0
 
 
 @dataclass
@@ -49,6 +57,7 @@ class ObjectMerger:
     extracted_object: ExtractedObject
     apply_modifiers: bool
     collection: str
+    skeleton_type: SkeletonType
     # Output
     merged_object: MergedObject = field(init=False)
 
@@ -97,19 +106,22 @@ class ObjectMerger:
 
     def prepare_temp_objects(self):
 
-        total_vg_count = sum([component.vg_count for component in self.extracted_object.components])
-
         index_offset = 0
 
-        for component in self.components:
+        for component_id, component in enumerate(self.components):
 
             component.objects.sort(key=lambda x: x.name)
 
-            for component_id, temp_object in enumerate(component.objects):
+            for temp_object in component.objects:
                 temp_obj = temp_object.object
                 # Remove ignored or unexpected vertex groups
-                ignore_list = [vg for vg in get_vertex_groups(temp_obj) if 'ignore' in vg.name.lower() or vg.index >= total_vg_count]
-                remove_vertex_groups(temp_obj, ignore_list)
+                if self.skeleton_type == SkeletonType.Merged:
+                    total_vg_count = sum([component.vg_count for component in self.extracted_object.components])
+                    ignore_list = [vg for vg in get_vertex_groups(temp_obj) if 'ignore' in vg.name.lower() or vg.index >= total_vg_count]
+                elif self.skeleton_type == SkeletonType.PerComponent:
+                    extracted_component = self.extracted_object.components[component_id]
+                    total_vg_count = len(extracted_component.vg_map)
+                    ignore_list = [vg for vg in get_vertex_groups(temp_obj) if 'ignore' in vg.name.lower() or vg.index >= total_vg_count]
                 # Apply all modifiers to temporary object
                 if self.apply_modifiers:
                     with OpenObject(self.context, temp_obj) as obj:
@@ -117,6 +129,7 @@ class ObjectMerger:
                         apply_modifiers_for_object_with_shape_keys(self.context, selected_modifiers, None)
                 # Triangulate temporary object, this step is crucial as export supports only triangles
                 triangulate_object(self.context, temp_obj)
+                remove_vertex_groups(temp_obj, ignore_list)
                 # Calculate vertex count of temporary object
                 temp_object.vertex_count = len(temp_obj.data.vertices)
                 # Calculate index count of temporary object, IB stores 3 indices per triangle
@@ -163,7 +176,9 @@ class ObjectMerger:
             components=self.components,
             vertex_count=len(obj.data.vertices),
             index_count=len(obj.data.polygons) * 3,
+            vg_count=len(get_vertex_groups(obj)),
             shapekeys=MergedObjectShapeKeys(),
+            skeleton_type=self.skeleton_type,
         )
 
         if vertex_count != self.merged_object.vertex_count:

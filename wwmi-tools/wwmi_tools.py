@@ -110,9 +110,19 @@ class WWMI_Settings(bpy.types.PropertyGroup):
         subtype="DIR_PATH",
     ) # type: ignore
 
+    import_skeleton_type: bpy.props.EnumProperty(
+        name="Skeleton",
+        description="Controls the way of Vertex Groups handling",
+        items=[
+            ('MERGED', 'Merged', 'Imported mesh will have unified list of Vertex Groups, allowing to weight any vertex of any component to any bone. Mod Upsides: easy to weight, advanced weighting support (i.e. long hair to cape). Mod Downsides: model will be updated with 1 frame delay, mod will pause while there are more than one of same modded object on screen. Suggested usage: new modders, character or echo mods with complex weights.'),
+            ('COMPONENT', 'Per-Component', 'Imported mesh will have its Vertex Groups split into per component lists, restricting weighting of any vertex only to its parent component. Mod Upsides: no 1-frame delay for model updates, minor performance gain. Mod downsides: hard to weight, very limited weighting options. Suggested usage: weapon mods and simple retextures.'),
+        ],
+        default=0,
+    ) # type: ignore
+
     mirror_mesh: BoolProperty(
         name="Mirror Mesh",
-        description="Automatically mirror mesh to match in-game position",
+        description="Automatically mirror mesh to match actual in-game left-right",
         default=True,
     ) # type: ignore
 
@@ -169,6 +179,16 @@ class WWMI_Settings(bpy.types.PropertyGroup):
         description="Texture with 512x512 size and .dds extension (BC7 SRGB) to be displayed in user notifications and mod managers, will be placed to /Textures/Logo.dds",
         default='',
         subtype="FILE_PATH",
+    ) # type: ignore
+
+    mod_skeleton_type: bpy.props.EnumProperty(
+        name="Skeleton",
+        description="Select the same skeleton type that was used for import! Defines logic of exported mod.ini.",
+        items=[
+            ('MERGED', 'Merged', 'Mesh with this skeleton should have unified list of Vertex Groups'),
+            ('COMPONENT', 'Per-Component', 'Mesh with this skeleton should have its Vertex Groups split into per-component lists.'),
+        ],
+        default=0,
     ) # type: ignore
 
     partial_export: BoolProperty(
@@ -264,6 +284,7 @@ class WWMI_Import(bpy.types.Operator):
     def execute(self, context):
         try:
             cfg = context.scene.wwmi_tools_settings
+            cfg.mod_skeleton_type = cfg.import_skeleton_type
             blender_import(self, context, cfg)
 
         except ValueError as e:
@@ -555,6 +576,7 @@ class WWMI_TOOLS_PT_UI_PANEL(bpy.types.Panel):
         layout.row().prop(cfg, 'component_collection')
         layout.row().prop(cfg, 'object_source_folder')
         layout.row().prop(cfg, 'mod_output_folder')
+        layout.row().prop(cfg, 'mod_skeleton_type')
 
         layout.row()
 
@@ -603,6 +625,7 @@ class WWMI_TOOLS_PT_UI_PANEL(bpy.types.Panel):
         layout.row()
 
         layout.row().prop(cfg, 'object_source_folder')
+        layout.row().prop(cfg, 'import_skeleton_type')
         layout.row().prop(cfg, 'mirror_mesh')
 
         layout.row()

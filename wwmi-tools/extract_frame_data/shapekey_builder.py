@@ -5,7 +5,7 @@ from typing import List, Dict
 from ..migoto_io.buffers.dxgi_format import DXGIFormat
 from ..migoto_io.buffers.byte_buffer import ByteBuffer, BufferElementLayout, BufferSemantic, AbstractSemantic, Semantic
 
-from .data_extractor import ShapeKeyData, PoseData, DrawData
+from .data_extractor import ShapeKeyData, DrawData
 
 
 @dataclass

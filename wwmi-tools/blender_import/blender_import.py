@@ -4,6 +4,7 @@ import struct
 import itertools
 import time
 from pathlib import Path
+import re
 
 from array import array
 
@@ -13,6 +14,8 @@ from bpy_extras.io_utils import unpack_list, axis_conversion
 from ..migoto_io.blender_interface.utility import *
 from ..migoto_io.blender_interface.collections import *
 from ..migoto_io.blender_interface.objects import *
+
+from ..extract_frame_data.metadata_format import read_metadata
 
 from .buffers import VertexBuffer, IndexBuffer
 
@@ -121,14 +124,18 @@ def import_normals_step2(mesh):
     # mesh.show_edge_sharp = True
 
 
-def import_vertex_groups(mesh, obj, blend_indices, blend_weights):
+def import_vertex_groups(mesh, obj, blend_indices, blend_weights, component):
     assert (len(blend_indices) == len(blend_weights))
     if blend_indices:
         # We will need to make sure we re-export the same blend indices later -
         # that they haven't been renumbered. Not positive whether it is better
         # to use the vertex group index, vertex group name or attach some extra
         # data. Make sure the indices and names match:
-        num_vertex_groups = max(itertools.chain(*itertools.chain(*blend_indices.values()))) + 1
+        if component is None:
+            num_vertex_groups = max(itertools.chain(*itertools.chain(*blend_indices.values()))) + 1
+        else:
+            num_vertex_groups = max(component.vg_map.values()) + 1
+            vg_map = list(map(int, component.vg_map.values()))
         for i in range(num_vertex_groups):
             obj.vertex_groups.new(name=str(i))
         for vertex in mesh.vertices:
@@ -137,7 +144,10 @@ def import_vertex_groups(mesh, obj, blend_indices, blend_weights):
                                 blend_weights[semantic_index][vertex.index]):
                     if w == 0.0:
                         continue
-                    obj.vertex_groups[i].add((vertex.index,), w, 'REPLACE')
+                    if component is None:
+                        obj.vertex_groups[i].add((vertex.index,), w, 'REPLACE')
+                    else:
+                        obj.vertex_groups[vg_map[i]].add((vertex.index,), w, 'REPLACE')
 
 
 def import_shapekeys(mesh, obj, shapekeys):
@@ -381,6 +391,19 @@ def import_vertices(mesh, vb, flip_normal=False):
 
 
 def import_3dmigoto_vb_ib(operator, context, cfg, paths, flip_texcoord_v=True, axis_forward='-Y', axis_up='Z'):
+    
+    vb_paths, ib_paths, use_bin, pose_path = zip(*paths)
+    fmt_path = vb_paths[0][1]
+
+    object_source_folder = resolve_path(cfg.object_source_folder)
+    extracted_object = read_metadata(object_source_folder / 'Metadata.json')
+
+    component_pattern = re.compile(r'.*component[ -_]*([0-9]+).*')
+    result = component_pattern.findall(fmt_path.name.lower())
+    component = None
+    if cfg.import_skeleton_type == 'MERGED' and len(result) == 1:
+        component = extracted_object.components[int(result[0])]
+        
     vb, ib, name, pose_path = load_3dmigoto_mesh(operator, paths)
 
     name = name.split('.')[0]
@@ -416,7 +439,7 @@ def import_3dmigoto_vb_ib(operator, context, cfg, paths, flip_texcoord_v=True, a
 
     import_vertex_layers(mesh, obj, vertex_layers)
 
-    import_vertex_groups(mesh, obj, blend_indices, blend_weights)
+    import_vertex_groups(mesh, obj, blend_indices, blend_weights, component)
 
     import_shapekeys(mesh, obj, shapekeys)
 

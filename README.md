@@ -11,6 +11,15 @@
   <a href="#license">License</a>
 </p>
 
+## For Mod Authors
+
+The 1.1 update introduced huge changes into the rendering pipeline and 3d assets, to update mods that were made for 1.0 please follow the steps below:
+1. Make a new frame dump of modded object (with mod disabled!) and extract it again.
+2. Import newly extracted object into Blender (use default Merged Skeleton setting)
+3. Make changed Vertex Groups ids in your custom mesh match ones of new import (you may use [Weight Match Blender Addon](https://gamebanana.com/tools/15699) to speed up the process)
+4. Export your updated custom model as new mod into new folder (use default Merged Skeleton setting).
+5. Check textures one by one and move the ones you've edited from old to new mod folder.
+
 ## Features  
 
 - **Frame Dump Data Extraction** — Fully automatic objects extraction from WuWa frame dumps
@@ -22,7 +31,7 @@
 
 ## Disclaimers  
 
-- **Alpha-1 Waring** — This is a first public alpha release, so you can expect all kinds of issues. Also, please keep in mind that WWMI feature set and formats are not set in stone and may be subject to change.
+- **Alpha-1 Waring** — WWMI is in early alpha testing phase, so you can expect all kinds of issues. Also, please keep in mind that WWMI feature set and formats are not set in stone and may be subject to change.
 
 ## Assets  
 

@@ -28,8 +28,8 @@ from .output_builder import OutputBuilder, TextureFilter
 
 @dataclass
 class Configuration:
-    output_path: str
-    dump_dir_path: str
+    # output_path: str
+    # dump_dir_path: str
     shader_data_pattern: Dict[str, ShaderMap]
     shader_resources: Dict[str, DataMap]
     output_vb_layout: BufferElementLayout
@@ -52,8 +52,8 @@ class Configuration:
 #        3.3. [COLOR+TEXCOORD+IB+Textures] Collect VS>PS calls from #1 with VB as input (vb from cs-u0 and cs-u1)
 #
 configuration = Configuration(
-    output_path=r'C:\Projects\Wuthering Waves\3DMIGOTO_DEV\!PROJECTS\Collect',
-    dump_dir_path=r'C:\Projects\Wuthering Waves\3DMIGOTO_DEV\FrameAnalysis-2024-06-14-120528',
+    # output_path=r'C:\Projects\Wuthering Waves\3DMIGOTO_DEV\!PROJECTS\Collect',
+    # dump_dir_path=r'C:\Projects\Wuthering Waves\3DMIGOTO_DEV\FrameAnalysis-2024-06-14-120528',
     # dump_dir_path=r'C:\Projects\Wuthering Waves\3DMIGOTO_DEV\FrameAnalysis-2024-06-10-190045',
     shader_data_pattern={
         'SHAPEKEY_CS_0': ShaderMap(ShaderType.Compute,
@@ -64,96 +64,62 @@ configuration = Configuration(
                                    outputs=[Slot('SHAPEKEY_CS_2', ShaderType.Empty, SlotType.UAV, SlotId(0))]),
         'SHAPEKEY_CS_2': ShaderMap(ShaderType.Compute,
                                    inputs=[Slot('SHAPEKEY_CS_1', ShaderType.Empty, SlotType.UAV, SlotId(0))],
-                                   outputs=[Slot('ANIMATED_POSE_CS', ShaderType.Empty, SlotType.UAV, SlotId(0))]),
-        'ANIMATED_POSE_CS': ShaderMap(ShaderType.Compute,
-                                      inputs=[Slot('SHAPEKEY_CS_2', ShaderType.Empty, SlotType.Texture, SlotId(3))],
-                                      outputs=[Slot('DRAW_VS', ShaderType.Empty, SlotType.UAV, SlotId(1))]),
-        'STATIC_POSE_CS': ShaderMap(ShaderType.Compute,
-                                    inputs=[],
-                                    outputs=[Slot('DRAW_VS', ShaderType.Empty, SlotType.UAV, SlotId(1))]),
-        'DRAW_VS': ShaderMap(ShaderType.Vertex,
-                             inputs=[
-                                 Slot('ANIMATED_POSE_CS', ShaderType.Empty, SlotType.VertexBuffer),
-                                 Slot('STATIC_POSE_CS', ShaderType.Empty, SlotType.VertexBuffer),
-                             ],
+                                   outputs=[Slot('DRAW_VS_DUMMY', ShaderType.Empty, SlotType.UAV, SlotId(0))]),
+        'DRAW_VS_DUMMY': ShaderMap(ShaderType.Vertex,
+                             inputs=[Slot('SHAPEKEY_CS_2', ShaderType.Empty, SlotType.VertexBuffer, SlotId(6)),],
                              outputs=[]),
+        'DRAW_VS': ShaderMap(ShaderType.Vertex,
+                             # Hack: When shader is short cirquited on itself, calls with listed input slots will be excluded from resulting branch
+                             inputs=[],
+                             # Hack: Short cirquit shader on itself to allow search of shaders without outputs
+                             outputs=[Slot('DRAW_VS', ShaderType.Empty, SlotType.VertexBuffer, SlotId(5))],),
     },
     shader_resources={
-        'POSE_CB': DataMap([
-                Source('STATIC_POSE_CS', ShaderType.Compute, SlotType.ConstantBuffer, SlotId(0)),
-                Source('ANIMATED_POSE_CS', ShaderType.Compute, SlotType.ConstantBuffer, SlotId(0)),
-            ],
-            BufferElementLayout([
-                BufferSemantic(AbstractSemantic(Semantic.RawData), DXGIFormat.R32G32B32A32_UINT)
-            ])),
-        'SKELETON_DATA': DataMap([
-            Source('STATIC_POSE_CS', ShaderType.Compute, SlotType.Texture, SlotId(0)),
-            Source('ANIMATED_POSE_CS', ShaderType.Compute, SlotType.Texture, SlotId(0)),
-        ],
-            BufferElementLayout([
-                BufferSemantic(AbstractSemantic(Semantic.RawData, 0), DXGIFormat.R32_FLOAT, stride=48),
-            ])),
-        'BLEND_BUFFER': DataMap([
-            Source('STATIC_POSE_CS', ShaderType.Compute, SlotType.Texture, SlotId(3)),
-            Source('ANIMATED_POSE_CS', ShaderType.Compute, SlotType.Texture, SlotId(4)),
-        ],
-            BufferElementLayout([
-                BufferSemantic(AbstractSemantic(Semantic.Blendindices, 0), DXGIFormat.R8G8B8A8_UINT),
-                BufferSemantic(AbstractSemantic(Semantic.Blendweight, 0), DXGIFormat.R8G8B8A8_UNORM),
-            ])),
-        'VECTOR_BUFFER': DataMap([
-            Source('STATIC_POSE_CS', ShaderType.Compute, SlotType.Texture, SlotId(4)),
-            Source('ANIMATED_POSE_CS', ShaderType.Compute, SlotType.Texture, SlotId(5)),
-        ],
-            BufferElementLayout([
-                BufferSemantic(AbstractSemantic(Semantic.Tangent, 0), DXGIFormat.R8G8B8A8_SNORM),
-                BufferSemantic(AbstractSemantic(Semantic.Normal, 0), DXGIFormat.R8G8B8A8_SNORM),
-            ])),
-        'POSITION_BUFFER': DataMap([
-            Source('STATIC_POSE_CS', ShaderType.Compute, SlotType.Texture, SlotId(5)),
-            Source('ANIMATED_POSE_CS', ShaderType.Compute, SlotType.Texture, SlotId(6)),
-        ],
-            BufferElementLayout([
-                BufferSemantic(AbstractSemantic(Semantic.Position, 0), DXGIFormat.R32G32B32_FLOAT),
-            ])),
-        'COLOR_BUFFER': DataMap([
-            Source('DRAW_VS', ShaderType.Vertex, SlotType.Texture, SlotId(2), file_ext='buf'),
-        ],
-            BufferElementLayout([
-                BufferSemantic(AbstractSemantic(Semantic.Color, 0), DXGIFormat.R8G8B8A8_UNORM),
-            ])),
-        'TEXCOORD_BUFFER': DataMap([
-            Source('DRAW_VS', ShaderType.Vertex, SlotType.Texture, SlotId(0), file_ext='buf'),
-        ],
-            BufferElementLayout([
-                BufferSemantic(AbstractSemantic(Semantic.TexCoord, 0), DXGIFormat.R16G16_FLOAT),
-                BufferSemantic(AbstractSemantic(Semantic.Color, 1), DXGIFormat.R16G16_UNORM),
-                BufferSemantic(AbstractSemantic(Semantic.TexCoord, 1), DXGIFormat.R16G16_FLOAT),
-                BufferSemantic(AbstractSemantic(Semantic.TexCoord, 2), DXGIFormat.R16G16_FLOAT),
-            ])),
         'SHAPEKEY_OFFSET_BUFFER': DataMap([
-            Source('SHAPEKEY_CS_1', ShaderType.Compute, SlotType.ConstantBuffer, SlotId(0)),
-        ],
+                Source('SHAPEKEY_CS_1', ShaderType.Compute, SlotType.ConstantBuffer, SlotId(0)),
+            ],
             BufferElementLayout([
                 BufferSemantic(AbstractSemantic(Semantic.RawData), DXGIFormat.R32_UINT),
             ])),
         'SHAPEKEY_VERTEX_ID_BUFFER': DataMap([
-            Source('SHAPEKEY_CS_1', ShaderType.Compute, SlotType.Texture, SlotId(0)),
-        ],
+                Source('SHAPEKEY_CS_1', ShaderType.Compute, SlotType.Texture, SlotId(0)),
+            ],
             BufferElementLayout([
                 BufferSemantic(AbstractSemantic(Semantic.RawData), DXGIFormat.R32_UINT),
             ])),
         'SHAPEKEY_VERTEX_OFFSET_BUFFER': DataMap([
-            Source('SHAPEKEY_CS_1', ShaderType.Compute, SlotType.Texture, SlotId(1)),
-        ],
+                Source('SHAPEKEY_CS_1', ShaderType.Compute, SlotType.Texture, SlotId(1)),
+            ],
             BufferElementLayout([
                 BufferSemantic(AbstractSemantic(Semantic.RawData), DXGIFormat.R16G16B16_FLOAT),
             ])),
-        'POSE_OUTPUT': DataMap([
-            Source('STATIC_POSE_CS', ShaderType.Empty, SlotType.UAV, SlotId(0)),
-            Source('ANIMATED_POSE_CS', ShaderType.Empty, SlotType.UAV, SlotId(0)),
-        ]),
-        'IB_BUFFER': DataMap([Source('DRAW_VS', ShaderType.Empty, SlotType.IndexBuffer, file_ext='buf')]),
+
+        'SHAPEKEY_OUTPUT': DataMap([Source('SHAPEKEY_CS_1', ShaderType.Empty, SlotType.UAV, SlotId(0))]),
+        'SHAPEKEY_SCALE_OUTPUT': DataMap([Source('SHAPEKEY_CS_1', ShaderType.Empty, SlotType.UAV, SlotId(1))]),
+
+
+        'SHAPEKEY_INPUT': DataMap([Source('DRAW_VS', ShaderType.Empty, SlotType.VertexBuffer, SlotId(6), ignore_missing=True)]),
+
+        'POSE_INPUT_0': DataMap([Source('DRAW_VS', ShaderType.Empty, SlotType.VertexBuffer, SlotId(0))]),
+
+        'SKELETON_DATA': DataMap([Source('DRAW_VS', ShaderType.Vertex, SlotType.ConstantBuffer, SlotId(4))]),
+
+        'SKELETON_DATA_BUFFER': DataMap([
+                Source('DRAW_VS', ShaderType.Vertex, SlotType.ConstantBuffer, SlotId(4)),
+            ],
+            BufferElementLayout(
+                semantics=[
+                    BufferSemantic(AbstractSemantic(Semantic.RawData, 0), DXGIFormat.R32_FLOAT, stride=48),
+                ],
+                force_stride=True)),
+
+        'POSE_CB': DataMap([
+                Source('DRAW_VS', ShaderType.Vertex, SlotType.ConstantBuffer, SlotId(0)),
+            ],
+            BufferElementLayout([
+                BufferSemantic(AbstractSemantic(Semantic.RawData), DXGIFormat.R32G32B32A32_UINT)
+            ])),
+
         'IB_BUFFER_TXT': DataMap([
                 Source('DRAW_VS', ShaderType.Empty, SlotType.IndexBuffer, file_ext='txt')
             ],
@@ -161,11 +127,43 @@ configuration = Configuration(
                 BufferSemantic(AbstractSemantic(Semantic.Index, 0), DXGIFormat.R16G16B16_UINT),
             ])
         ),
-        'SHAPEKEY_OUTPUT': DataMap([Source('SHAPEKEY_CS_1', ShaderType.Empty, SlotType.UAV, SlotId(0))]),
-        'SHAPEKEY_SCALE_OUTPUT': DataMap([Source('SHAPEKEY_CS_1', ShaderType.Empty, SlotType.UAV, SlotId(1))]),
-        'SHAPEKEY_INPUT': DataMap([Source('ANIMATED_POSE_CS', ShaderType.Compute, SlotType.Texture, SlotId(3))]),
-        'POSE_INPUT_0': DataMap([Source('DRAW_VS', ShaderType.Empty, SlotType.VertexBuffer, SlotId(0))]),
-        'POSE_INPUT_1': DataMap([Source('DRAW_VS', ShaderType.Empty, SlotType.VertexBuffer, SlotId(1))]),
+
+        'POSITION_BUFFER': DataMap([
+                Source('DRAW_VS', ShaderType.Empty, SlotType.VertexBuffer, SlotId(0)),
+            ],
+            BufferElementLayout([
+                BufferSemantic(AbstractSemantic(Semantic.Position, 0), DXGIFormat.R32G32B32_FLOAT),
+            ])),
+        'VECTOR_BUFFER': DataMap([
+                Source('DRAW_VS', ShaderType.Empty, SlotType.VertexBuffer, SlotId(1)),
+            ],
+            BufferElementLayout([
+                BufferSemantic(AbstractSemantic(Semantic.Tangent, 0), DXGIFormat.R8G8B8A8_SNORM),
+                BufferSemantic(AbstractSemantic(Semantic.Normal, 0), DXGIFormat.R8G8B8A8_SNORM),
+            ])),
+        'TEXCOORD_BUFFER': DataMap([
+                Source('DRAW_VS', ShaderType.Empty, SlotType.VertexBuffer, SlotId(2), file_ext='buf'),
+            ],
+            BufferElementLayout([
+                BufferSemantic(AbstractSemantic(Semantic.TexCoord, 0), DXGIFormat.R16G16_FLOAT),
+                BufferSemantic(AbstractSemantic(Semantic.Color, 1), DXGIFormat.R16G16_UNORM),
+                BufferSemantic(AbstractSemantic(Semantic.TexCoord, 1), DXGIFormat.R16G16_FLOAT),
+                BufferSemantic(AbstractSemantic(Semantic.TexCoord, 2), DXGIFormat.R16G16_FLOAT),
+            ])),
+        'COLOR_BUFFER': DataMap([
+                Source('DRAW_VS', ShaderType.Empty, SlotType.VertexBuffer, SlotId(3), file_ext='buf'),
+            ],
+            BufferElementLayout([
+                BufferSemantic(AbstractSemantic(Semantic.Color, 0), DXGIFormat.R8G8B8A8_UNORM),
+            ])),
+        'BLEND_BUFFER': DataMap([
+                Source('DRAW_VS', ShaderType.Empty, SlotType.VertexBuffer, SlotId(4)),
+            ],
+            BufferElementLayout([
+                BufferSemantic(AbstractSemantic(Semantic.Blendindices, 0), DXGIFormat.R8G8B8A8_UINT),
+                BufferSemantic(AbstractSemantic(Semantic.Blendweight, 0), DXGIFormat.R8G8B8A8_UNORM),
+            ], force_stride=True)),
+        
         'TEXTURE_0': DataMap([Source('DRAW_VS', ShaderType.Pixel, SlotType.Texture, SlotId(0), ignore_missing=True)]),
         'TEXTURE_1': DataMap([Source('DRAW_VS', ShaderType.Pixel, SlotType.Texture, SlotId(1), ignore_missing=True)]),
         'TEXTURE_2': DataMap([Source('DRAW_VS', ShaderType.Pixel, SlotType.Texture, SlotId(2), ignore_missing=True)]),
@@ -175,6 +173,7 @@ configuration = Configuration(
         'TEXTURE_6': DataMap([Source('DRAW_VS', ShaderType.Pixel, SlotType.Texture, SlotId(6), ignore_missing=True)]),
         'TEXTURE_7': DataMap([Source('DRAW_VS', ShaderType.Pixel, SlotType.Texture, SlotId(7), ignore_missing=True)]),
         'TEXTURE_8': DataMap([Source('DRAW_VS', ShaderType.Pixel, SlotType.Texture, SlotId(8), ignore_missing=True)]),
+        
     },
     output_vb_layout=BufferElementLayout([
         BufferSemantic(AbstractSemantic(Semantic.Position, 0), DXGIFormat.R32G32B32_FLOAT),
@@ -280,7 +279,6 @@ def extract_frame_data(cfg):
         output_vb_layout=configuration.output_vb_layout,
         shader_hashes=data_extractor.shader_hashes,
         shapekeys=shapekeys.shapekeys,
-        pose_data=data_extractor.pose_data,
         draw_data=data_extractor.draw_data
     )
 

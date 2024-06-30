@@ -81,6 +81,7 @@ class ResourceCollector:
                         resource = IndexBuffer(layout, f)
                 else:
                     resource = ByteBuffer(layout, resource.get_bytes())
+
                 self.cache[resource_hash] = resource
             else:
                 resource = cached_resource

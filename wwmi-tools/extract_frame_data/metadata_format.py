@@ -7,13 +7,13 @@ from dataclasses import dataclass, field, asdict
 
 @dataclass
 class ExtractedObjectComponent:
-    dispatch_x: int
     vertex_offset: int
     vertex_count: int
     index_offset: int
     index_count: int
     vg_offset: int
     vg_count: int
+    vg_map: Dict[int, int]
 
 
 @dataclass
@@ -27,9 +27,8 @@ class ExtractedObjectShapeKeys:
 
 @dataclass
 class ExtractedObject:
-    ib_hash: str
     vb0_hash: str
-    vb1_hash: str
+    cb4_hash: str
     vertex_count: int
     index_count: int
     components: List[ExtractedObjectComponent]
@@ -45,6 +44,7 @@ class ExtractedObject:
 
 
 def read_metadata(metadata_path: Path) -> ExtractedObject:
+    if not metadata_path.is_file():
+        return None
     with open(metadata_path) as f:
         return ExtractedObject(**json.load(f))
-

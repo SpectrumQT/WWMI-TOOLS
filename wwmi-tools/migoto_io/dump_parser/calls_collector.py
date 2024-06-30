@@ -23,6 +23,8 @@ class ShaderMap:
     shader_type: ShaderType
     inputs: List[Slot]
     outputs: List[Slot]
+    # with_resources: List[Slot] = []
+    # without_resources: List[Slot] = []
 
 
 @dataclass
@@ -71,6 +73,25 @@ class CallsCollector:
                 output_hashes = []
 
                 for resource_raw, root_resource in root_shader_resource_candidates.items():
+
+                    # Quick hack to allow short-cirquit shader on itself
+                    if output_slot.shader_id == shader_id:
+
+                        for input_slot in shader_map.inputs:
+                            if input_slot.shader_id != shader_id:
+                                continue
+                            input_filter_attributes = {
+                                'call_id': root_resource.call_id,  # ID of child call should differ from parent call
+                            }
+                            input_candidate_resources = DictFilter(Filter(
+                                attributes=input_filter_attributes,
+                                dictionaries=self.get_all_slot_resources(shader_map.shader_type, input_slot)
+                            )).filtered_dict
+                            if len(input_candidate_resources) > 0:
+                                continue
+
+                        branch.calls.append(BranchCall(call=root_resource.call))
+                        continue
 
                     nested_branch = self.resolve_branch(output_slot.shader_id, self.shader_data_pattern, root_resource, shader_id)
 
@@ -192,6 +213,11 @@ class CallsCollector:
     def get_root_shaders(shader_data_pattern):
         root_shaders = []
         for shader_id, shader_map in shader_data_pattern.items():
+            # Hack: Force short-cirquited shaders into root shaders
+            for outputs in shader_map.outputs:
+                if outputs.shader_id == shader_id:
+                    root_shaders.append(shader_id)
+                    break
             if len(shader_map.inputs) == 0:
                 root_shaders.append(shader_id)
         return root_shaders

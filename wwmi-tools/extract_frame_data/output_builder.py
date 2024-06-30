@@ -115,21 +115,20 @@ class OutputBuilder:
     def build_metadata(mesh_object, shapekeys):
         return ExtractedObject(
 
-            ib_hash=mesh_object.ib_hash,
             vb0_hash=mesh_object.vb0_hash,
-            vb1_hash=mesh_object.vb1_hash,
+            cb4_hash=mesh_object.cb4_hash,
             vertex_count=mesh_object.vertex_count,
             index_count=mesh_object.index_count,
 
             components=[
                 ExtractedObjectComponent(
-                    dispatch_x=component.dispatch_x,
                     vertex_offset=component.vertex_offset,
                     vertex_count=component.vertex_count,
                     index_offset=component.index_offset,
                     index_count=component.index_count,
                     vg_offset=component.vg_offset,
                     vg_count=component.vg_count,
+                    vg_map=component.vg_map,
                 ) for component in mesh_object.components
             ],
 
@@ -139,7 +138,7 @@ class OutputBuilder:
                 vertex_count=shapekeys.shapekey_offsets[-1] - 1,
                 dispatch_y=shapekeys.dispatch_y,
                 checksum=sum(shapekeys.shapekey_offsets[0:4]),
-            ) if shapekeys is not None else ExtractedObjectShapeKeys()
+            ) if shapekeys is not None else ExtractedObjectShapeKeys(),
             
         ).as_json()
 

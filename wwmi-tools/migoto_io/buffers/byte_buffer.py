@@ -2,6 +2,7 @@
 import io
 import copy
 import textwrap
+import math
 
 from typing import Union, List
 from dataclasses import dataclass
@@ -93,6 +94,7 @@ class BufferSemantic:
 class BufferElementLayout:
     semantics: List[BufferSemantic]
     stride: int = 0
+    force_stride: bool = False
 
     def __post_init__(self):
         # Autofill byte Stride and Offsets
@@ -208,6 +210,11 @@ class ByteBuffer:
             self.validate()
 
     def from_bytes(self, data_bytes):
+        if self.layout.force_stride:
+            data_bytes.extend(bytearray((math.ceil(len(data_bytes) / self.layout.stride)) * self.layout.stride - len(data_bytes)))
+
+
+
         num_elements = len(data_bytes) / self.layout.stride
         if num_elements % 1 != 0:
             raise ValueError(f'buffer stride {self.layout.stride} must be multiplier of bytes len {len(data_bytes)}')

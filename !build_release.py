@@ -76,7 +76,7 @@ class Project:
                 print(f'Existing directory sent to {self.trash_path}!')
 
         release_path = self.version_dir / f'WWMI-Tools'
-        shutil.copytree(self.wwmi_tools_dir, release_path, ignore=shutil.ignore_patterns('__pycache__'))
+        shutil.copytree(self.wwmi_tools_dir, release_path, ignore=shutil.ignore_patterns('__pycache__', '.idea'))
 
         shutil.make_archive(str(self.version_dir / f'{release_path.name}-v{self.version}'), 'zip', self.version_dir, release_path.name)
 

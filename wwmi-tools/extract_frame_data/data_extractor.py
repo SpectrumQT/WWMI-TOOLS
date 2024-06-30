@@ -25,30 +25,22 @@ class ShapeKeyData:
 
 
 @dataclass
-class PoseData:
-    vb_hash: str
-    shapekey_hash: Union[str, None]
-    cb_format: PoseConstantBufferFormat
-    total_vertex_count: int
-    dispatch_x: int
-    position_buffer: ByteBuffer
-    blend_buffer: ByteBuffer
-    vector_buffer: ByteBuffer
-    skeleton_data: ByteBuffer
-
-
-@dataclass
 class DrawData:
-    ib_hash: str
     vb_hash: str
+    cb4_hash: str
     vertex_offset: int
     vertex_count: int
     index_offset: int
     index_count: int
     index_buffer: IndexBuffer
-    textures: List[ResourceDescriptor]
-    color_buffer: ByteBuffer
+    position_buffer: ByteBuffer
+    vector_buffer: ByteBuffer
     texcoord_buffer: ByteBuffer
+    color_buffer: ByteBuffer
+    blend_buffer: ByteBuffer
+    skeleton_data: ByteBuffer
+    shapekey_hash: Union[str, None]
+    textures: List[ResourceDescriptor]
 
 
 @dataclass
@@ -58,17 +50,15 @@ class DataExtractor:
     # Output
     shader_hashes: Dict[str, str] = field(init=False)
     shape_key_data: Dict[str, ShapeKeyData] = field(init=False)
-    pose_data: Dict[tuple, PoseData] = field(init=False)
     draw_data: Dict[tuple, DrawData] = field(init=False)
 
     def __post_init__(self):
         self.shader_hashes = {}
         self.shape_key_data = {}
-        self.pose_data = {}
         self.draw_data = {}
 
         self.handle_shapekey_cs_0(list(self.call_branches.values()))
-        self.handle_static_pose_cs(list(self.call_branches.values()))
+        self.handle_static_draw_vs(list(self.call_branches.values()))
 
     def handle_shapekey_cs_0(self, call_branches):
         for call_branch in call_branches:
@@ -113,89 +103,31 @@ class DataExtractor:
                 continue
             for branch_call in call_branch.calls:
                 self.verify_shader_hash(branch_call.call, call_branch.shader_id, 1)
-            # We don't need any data from this call as well, lets go deeper
-            self.handle_animated_pose_cs(call_branch.nested_branches)
+            # We don't need any data from this call as well, lets just ensure that it's here
 
-    def handle_animated_pose_cs(self, call_branches):
+    def handle_static_draw_vs(self, call_branches):
         for call_branch in call_branches:
-            if call_branch.shader_id == 'ANIMATED_POSE_CS':
-                self.handle_pose_cs_branch(call_branch)
+            if call_branch.shader_id == 'DRAW_VS':
+                self.handle_draw_vs(call_branches, 'DRAW_VS')
 
-    def handle_static_pose_cs(self, call_branches):
-        for call_branch in call_branches:
-            if call_branch.shader_id == 'STATIC_POSE_CS':
-                self.handle_pose_cs_branch(call_branch)
-
-    def handle_pose_cs_branch(self, call_branch):
-        for branch_call in call_branch.calls:
-
-            cb_format, vertex_offset, vertex_count = self.read_pose_cs_cb(branch_call.resources['POSE_CB'])
-
-            if call_branch.shader_id == 'ANIMATED_POSE_CS':
-                pose_cs_cb_format = PoseConstantBufferFormat.animated
-                shapekey_hash = branch_call.resources['SHAPEKEY_INPUT'].hash
-            else:
-                pose_cs_cb_format = PoseConstantBufferFormat.static
-                shapekey_hash = None
-
-            # Skip ANIMATED_POSE_CS calls that were misidentified as STATIC_POSE_CS calls due to same IO pattern
-            if pose_cs_cb_format == PoseConstantBufferFormat.static and cb_format == PoseConstantBufferFormat.animated:
-                continue
-
-            # Skip STATIC_POSE_CS calls that were misidentified as ANIMATED_POSE_CS calls due to same IO pattern
-            # if pose_cs_cb_format == PoseConstantBufferFormat.animated and cb_format == PoseConstantBufferFormat.static:
-            #     continue
-
-            if cb_format != pose_cs_cb_format:
-                raise ValueError(f'CB format mismatch for {call_branch.shader_id} call {branch_call}')
-
-            self.verify_shader_hash(branch_call.call, call_branch.shader_id, 1)
-
-            position_buffer = branch_call.resources['POSITION_BUFFER']
-            blend_buffer = branch_call.resources['BLEND_BUFFER']
-            vector_buffer = branch_call.resources['VECTOR_BUFFER']
-
-            if blend_buffer.num_elements != position_buffer.num_elements:
-                raise ValueError(f'BLEND_BUFFER size must match POSITION_BUFFER!')
-            if vector_buffer.num_elements != position_buffer.num_elements:
-                raise ValueError(f'VECTOR_BUFFER size must match POSITION_BUFFER!')
-
-            pose_data = PoseData(
-                cb_format=cb_format,
-                total_vertex_count=position_buffer.num_elements,
-                vb_hash=branch_call.resources['POSE_OUTPUT'].hash,
-                shapekey_hash=shapekey_hash,
-                dispatch_x=branch_call.call.parameters[CallParameters.Dispatch].ThreadGroupCountX,
-                position_buffer=position_buffer.get_fragment(vertex_offset, vertex_count),
-                blend_buffer=blend_buffer.get_fragment(vertex_offset, vertex_count),
-                vector_buffer=vector_buffer.get_fragment(vertex_offset, vertex_count),
-                skeleton_data=branch_call.resources['SKELETON_DATA'],
-            )
-
-            draw_guid = (vertex_offset, vertex_count, pose_data.vb_hash)
-
-            cached_pose_data = self.pose_data.get(draw_guid, None)
-
-            if cached_pose_data is None:
-                self.pose_data[draw_guid] = pose_data
-            else:
-                if pose_data.dispatch_x != cached_pose_data.dispatch_x:
-                    raise ValueError(f'dispatch params mismatch for ANIMATED_POSE_CS')
-                # else:
-                #     print('duplicate')
-
-        self.handle_draw_vs(call_branch.nested_branches)
-
-    def handle_draw_vs(self, call_branches):
+    def handle_draw_vs(self, call_branches, daw_vs_tag):
         for call_branch in call_branches:
 
-            if call_branch.shader_id != 'DRAW_VS':
+            if call_branch.shader_id != daw_vs_tag:
                 continue
 
             for branch_call in call_branch.calls:
 
+                shapekey_input_resource = branch_call.resources['SHAPEKEY_INPUT']
+
+                if shapekey_input_resource is not None:
+                    shapekey_hash = shapekey_input_resource.hash
+                else:
+                    shapekey_hash = None
+
                 index_buffer = branch_call.resources['IB_BUFFER_TXT']
-                vb_hash = branch_call.resources['POSE_INPUT_1'].hash
+
+                vb_hash = branch_call.resources['POSE_INPUT_0'].hash
 
                 vertex_indices = [x for y in index_buffer.faces for x in y]
                 vertex_offset = min(vertex_indices)
@@ -203,19 +135,26 @@ class DataExtractor:
 
                 draw_guid = (vertex_offset, vertex_count, vb_hash)
 
-                cached_pose_data = self.pose_data.get(draw_guid, None)
+                position_buffer = branch_call.resources['POSITION_BUFFER']
+                blend_buffer = branch_call.resources['BLEND_BUFFER']
 
-                if cached_pose_data is None:
+                if blend_buffer.num_elements != position_buffer.num_elements:
+                    print(f'Object type not recognized for call {branch_call.call}')
                     continue
 
+                vector_buffer = branch_call.resources['VECTOR_BUFFER']
+
+                if vector_buffer.num_elements != position_buffer.num_elements:
+                    raise ValueError(f'VECTOR_BUFFER size must match POSITION_BUFFER!')
+
                 color_buffer = branch_call.resources['COLOR_BUFFER']
-                if color_buffer.num_elements == cached_pose_data.total_vertex_count:
+                if color_buffer.num_elements == position_buffer.num_elements:
                     color_buffer = color_buffer.get_fragment(vertex_offset, vertex_count)
                 else:
                     color_buffer = None
 
                 texcoord_buffer = branch_call.resources['TEXCOORD_BUFFER']
-                if texcoord_buffer.num_elements == cached_pose_data.total_vertex_count:
+                if texcoord_buffer.num_elements == position_buffer.num_elements:
                     texcoord_buffer = texcoord_buffer.get_fragment(vertex_offset, vertex_count)
                 else:
                     texcoord_buffer = None
@@ -227,16 +166,22 @@ class DataExtractor:
                         textures.append(texture)
 
                 draw_data = DrawData(
-                    ib_hash=branch_call.resources['IB_BUFFER'].hash,
                     vb_hash=branch_call.resources['POSE_INPUT_0'].hash,
+                    cb4_hash=branch_call.resources['SKELETON_DATA'].hash,
                     vertex_offset=vertex_offset,
                     vertex_count=vertex_count,
                     index_offset=branch_call.call.parameters[CallParameters.DrawIndexed].StartIndexLocation,
                     index_count=branch_call.call.parameters[CallParameters.DrawIndexed].IndexCount,
+                    # dispatch_x=branch_call.call.parameters[CallParameters.Dispatch].ThreadGroupCountX,
                     index_buffer=index_buffer,
-                    color_buffer=color_buffer,
+                    position_buffer=position_buffer.get_fragment(vertex_offset, vertex_count),
+                    vector_buffer=vector_buffer.get_fragment(vertex_offset, vertex_count),
                     texcoord_buffer=texcoord_buffer,
+                    color_buffer=color_buffer,
+                    blend_buffer=blend_buffer.get_fragment(vertex_offset, vertex_count),
+                    skeleton_data=branch_call.resources['SKELETON_DATA_BUFFER'],
                     textures=textures,
+                    shapekey_hash=shapekey_hash,
                 )
 
                 cached_draw_data = self.draw_data.get(draw_guid, None)
@@ -264,32 +209,3 @@ class DataExtractor:
             self.shader_hashes[shader_id] = call_shader_hash
         elif cached_shader_hash != call_shader_hash:
             raise ValueError(f'inconsistent shader hash {cached_shader_hash} for {shader_id}')
-
-    @staticmethod
-    def read_pose_cs_cb(cb):
-        cb_0 = cb.get_element(0).get_value(AbstractSemantic(Semantic.RawData, 0))
-        cb_1 = cb.get_element(1).get_value(AbstractSemantic(Semantic.RawData, 0))
-
-        offset = cb_0[2]
-
-        # For all pose shaders following must be true:
-        #  1. cb[0].y == cb[0].z
-        if offset != cb_0[1]:
-            raise ValueError(f'Unknown cb format!')
-
-        doubled_offset = offset * 2
-        # For Pose CS without ShapeKey cb following must be true:
-        #  1. cb[0].y * 2 == cb[1].x
-        if doubled_offset == cb_1[0]:
-            vertex_count = cb_0[3]
-            cb_format = PoseConstantBufferFormat.static
-        # For Pose CS with ShapeKey cb following must be true:
-        #  1. cb[0].y * 2 == cb[1].y
-        elif doubled_offset == cb_1[1]:
-            vertex_count = cb_1[0]
-            cb_format = PoseConstantBufferFormat.animated
-        # Exit if failed to detect format
-        else:
-            raise ValueError(f'Unknown cb format!')
-
-        return cb_format, offset, vertex_count
