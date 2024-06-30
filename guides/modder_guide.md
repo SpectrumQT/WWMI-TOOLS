@@ -19,7 +19,17 @@
 2. Select Mode: **Extract Objects From Dump**
 3. Configure **Frame Dump** field: input path to dump data folder **FrameAnalysis-DATETIME**
 4. Configure **Output Folder** filed: input path to folder where you want to store extracted objects 
-5. Configure **Skeleton** selection:
+5. Press **[Extract Objects From Dump]** button
+Extracted object will be placed in separate folders named after VB0 hash parsed from the shader calls. Feel free to fiddle with Texture Filtering options, they indented to filter out garbage textures set by the game but aren't actually used by relevant shaders.
+
+![frame-data-collection](https://github.com/SpectrumQT/WWMI-TOOLS/blob/main/public-media/Frame%20Data%20Collection.gif)
+
+<h2>Extracted Object Import</h2>
+
+1. Go to **Sidebar > Tool > WWMI Tools**
+2. Select Mode: **Import Object**
+3. Configure **Object Sources** field: input path to hash-named folder containing object data
+4. Configure **Skeleton** selection:
     * **Merged**
         * Features: Imported mesh will have unified list of Vertex Groups, allowing to weight any vertex of any component to any bone.
         * Mod Upsides: Easy to weight, advanced weighting support (i.e. long hair to cape).
@@ -30,17 +40,7 @@
         * Mod Upsides: No 1-frame delay for model updates, minor performance gain.
         * Mod Downsides: Hard to weight, very limited weighting options.
         * Suggested Usage: Weapon mods, simple character edits and retextures.
-6. Press **[Extract Objects From Dump]** button
-Extracted object will be placed in separate folders named after VB0 hash parsed from the shader calls. Feel free to fiddle with Texture Filtering options, they indented to filter out garbage textures set by the game but aren't actually used by relevant shaders.
-
-![frame-data-collection](https://github.com/SpectrumQT/WWMI-TOOLS/blob/main/public-media/Frame%20Data%20Collection.gif)
-
-<h2>Extracted Object Import</h2>
-
-1. Go to **Sidebar > Tool > WWMI Tools**
-2. Select Mode: **Import Object**
-3. Configure **Object Sources** field: input path to hash-named folder containing object data
-4. Press **[Import Object]** button
+5. Press **[Import Object]** button
 Imported object components will appear as hash-named collection of Blender objects. 
  
 ![extracted-object-import](https://github.com/SpectrumQT/WWMI-TOOLS/blob/main/public-media/Object%20Import.gif)
