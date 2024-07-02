@@ -31,7 +31,7 @@ The 1.1 update introduced huge changes into the rendering pipeline and 3d assets
 
 ## Disclaimers  
 
-- **Alpha-1 Waring** — WWMI is in early alpha testing phase, so you can expect all kinds of issues. Also, please keep in mind that WWMI feature set and formats are not set in stone and may be subject to change.
+- **Alpha-1 Warning** — WWMI is in early alpha testing phase, so you can expect all kinds of issues. Also, please keep in mind that WWMI feature set and formats are not set in stone and may be subject to change.
 
 ## Assets  
 

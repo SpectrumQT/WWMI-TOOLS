@@ -41,6 +41,38 @@ def translate_vectors(dxgi_format, flip):
         return lambda x: x
 
 
+def normalize_weights(weights):
+    '''
+    Noramlizes provided list of float weights in a 8-bit friendly way 
+    Returns list of 8-bit integers (0-255) with sum of 255
+    '''
+    total = sum(weights)
+
+    if total == 0:
+        return weights
+
+    precision_error = 255
+
+    tickets = [0] * len(weights)
+
+    for idx, weight in enumerate(weights):
+        if weight == 0:
+            continue
+        weight = weight / total * 255
+        int_weight = int(weight)
+        precision_error -= int_weight
+        weights[idx] = int_weight
+        tickets[idx] = 255 / weight * (weight - int_weight)
+
+    while precision_error > 0:
+        i = tickets.index(max(tickets))
+        weights[i] += 1
+        precision_error -= 1
+        tickets[i] = 0
+
+    return weights
+
+
 @dataclass
 class DataMap:
     LoopDataConverters: OrderedDict[AbstractSemantic, Union[LambdaType, None]]
@@ -65,21 +97,19 @@ def get_default_data_map():
         VertexDataConverters=OrderedDict({
             AbstractSemantic(Semantic.Position): None,
             AbstractSemantic(Semantic.Blendindices): lambda data: data[0:4] + [0] * (4 - len(data)),
-            AbstractSemantic(Semantic.Blendweight): lambda data: data[0:4] + [0] * (4 - len(data)),
+            AbstractSemantic(Semantic.Blendweight): lambda data: normalize_weights(data[0:4]) + [0] * (4 - len(data)),
         }),
         IndexBuffer={
             'Index': [
-                BufferSemantic(AbstractSemantic(Semantic.Index), DXGIFormat.R16_UINT, stride=6)
+                BufferSemantic(AbstractSemantic(Semantic.Index), DXGIFormat.R32_UINT, stride=12)
             ]},
         VertexBuffers={
             'Position': [
                 BufferSemantic(AbstractSemantic(Semantic.Position, 0), DXGIFormat.R32_FLOAT, stride=12)
             ],
             'Blend': [
-                # BufferSemantic(AbstractSemantic(Semantic.Blendindices, 0), DXGIFormat.R32G32B32A32_UINT),
-                # BufferSemantic(AbstractSemantic(Semantic.Blendweight, 0), DXGIFormat.R32G32B32A32_FLOAT),
                 BufferSemantic(AbstractSemantic(Semantic.Blendindices, 0), DXGIFormat.R8_UINT, stride=4),
-                BufferSemantic(AbstractSemantic(Semantic.Blendweight, 0), DXGIFormat.R8G8B8A8_UNORM),
+                BufferSemantic(AbstractSemantic(Semantic.Blendweight, 0), DXGIFormat.R8_UINT, stride=4),
             ],
             'Vector': [
                 BufferSemantic(AbstractSemantic(Semantic.Tangent, 0), DXGIFormat.R8G8B8A8_SNORM),
@@ -277,6 +307,7 @@ def blender_export(operator, context, cfg, data_map):
 
     object_merger = ObjectMerger(
         extracted_object=extracted_object,
+        ignore_hidden=cfg.ignore_hidden,
         apply_modifiers=cfg.apply_all_modifiers,
         context=context,
         collection=cfg.component_collection,

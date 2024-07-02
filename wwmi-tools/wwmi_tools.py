@@ -136,6 +136,12 @@ class WWMI_Settings(bpy.types.PropertyGroup):
         type=bpy.types.Collection,
         # default=False
     ) # type: ignore
+    
+    ignore_hidden: BoolProperty(
+        name="Ignore Hidden Objects",
+        description="If enabled, hidden objects inside Components collection won't be exported",
+        default=False,
+    ) # type: ignore
 
     mod_output_folder: StringProperty(
         name="Mod Folder",
@@ -574,6 +580,7 @@ class WWMI_TOOLS_PT_UI_PANEL(bpy.types.Panel):
         layout.row()
         
         layout.row().prop(cfg, 'component_collection')
+        layout.row().prop(cfg, 'ignore_hidden')
         layout.row().prop(cfg, 'object_source_folder')
         layout.row().prop(cfg, 'mod_output_folder')
         layout.row().prop(cfg, 'mod_skeleton_type')

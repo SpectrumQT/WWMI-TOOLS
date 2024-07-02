@@ -55,6 +55,7 @@ class ObjectMerger:
     # Input
     context: bpy.context
     extracted_object: ExtractedObject
+    ignore_hidden: bool
     apply_modifiers: bool
     collection: str
     skeleton_type: SkeletonType
@@ -88,6 +89,9 @@ class ObjectMerger:
         component_pattern = re.compile(r'.*(?:component|part)[_ -]*(\d+).*')
 
         for obj in get_collection_objects(self.collection):
+
+            if self.ignore_hidden and object_is_hidden(obj):
+                continue
 
             if obj.name.startswith('TEMP_'):
                 continue
@@ -158,7 +162,8 @@ class ObjectMerger:
 
         rename_object(obj, 'TEMP_EXPORT_OBJECT')
 
-        normalize_all_weights(self.context, obj)
+        # We'll skip Blender weight normalizer in favor of custom 8-bit friendly normalizer that is applied to weight data later
+        # normalize_all_weights(self.context, obj)
 
         deselect_all_objects()
         select_object(obj)
