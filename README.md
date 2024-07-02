@@ -4,9 +4,9 @@
 
 <p align="center">
   <a href="#features">Features</a> •
+  <a href="#how-to-use">How To Use</a> • 
   <a href="#assets">Assets</a> •
   <a href="#installation">Installation</a> •
-  <a href="#how-to-use">How To Use</a> • 
   <a href="#resources">Resources</a> •
   <a href="#license">License</a>
 </p>
@@ -14,13 +14,18 @@
 ## For Mod Authors
 
 The 1.1 update has introduced huge changes into the rendering pipeline and 3d assets, to update mods that were made for 1.0 please follow the steps below:
-1. Update your [WWMI Tools Blender plugin to 0.8.0](https://github.com/SpectrumQT/WWMI-TOOLS/releases/tag/v0.8.0).
+1. Update your [WWMI Tools Blender plugin to 0.8.1](https://github.com/SpectrumQT/WWMI-TOOLS/releases/tag/v0.8.1).
 2. Make a new frame dump of modded object (with mod disabled!) and extract it again.
 3. Import newly extracted object into Blender (use default Merged Skeleton setting)
 4. Make changed Vertex Groups ids in your custom mesh match ones of new import (you may use [Weight Match Blender Addon](https://gamebanana.com/tools/15699) to speed up the process)
 5. Export your updated custom model as new mod into new folder (use default Merged Skeleton setting).
 6. Check textures one by one and move the ones you've edited from old to new mod folder.
 
+## Known Issues
+    Blurry edges on modded model during fast movement (fix: disable DLSS or FSR)
+    Glitching see-through 'white shadow' when character is behind large boss (fix: reduce Shadow Quality in Graphics Settings)
+    Shape Keys aren't (fully) loading for Jinshi and other characters (research required)
+    
 ## Features  
 
 - **Frame Dump Data Extraction** — Fully automatic objects extraction from WuWa frame dumps
@@ -34,13 +39,13 @@ The 1.1 update has introduced huge changes into the rendering pipeline and 3d as
 
 - **Alpha-1 Warning** — WWMI is in early alpha testing phase, so you can expect all kinds of issues. Also, please keep in mind that WWMI feature set and formats are not set in stone and may be subject to change.
 
-## Assets  
-
-Already dumped and exported models will be located in [WWMI Assets](https://github.com/SpectrumQT/WWMI-Assets) repository.
-
 ## How To Use
 
 All fields and actions of the plugin have basic tooltips. Refer to [Modder Guide](https://github.com/SpectrumQT/WWMI-TOOLS/blob/main/guides/modder_guide.md) for more details.
+
+## Assets  
+
+Already dumped and exported models will be located in [WWMI Assets](https://github.com/SpectrumQT/WWMI-Assets) repository.
 
 ## Installation
 
