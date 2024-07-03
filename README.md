@@ -13,13 +13,13 @@
 
 ## For Mod Authors
 
-**WWMI 0.6.1** and **WWMI Tools 0.8.2** updates resolved issues with Shape Keys (face and shoulder animations). To fix existing mods:
+**WWMI 0.6.1** and **WWMI Tools 0.8.3** updates resolved issues with Shape Keys (face and shoulder animations). To fix existing mods:
 1. Update **WWMI** to the [latest version](https://github.com/SpectrumQT/WWMI/releases/latest).
 2. Update **WWMI Tools** Blender plugin to the [latest version](https://github.com/SpectrumQT/WWMI-TOOLS/releases/latest).
 3. Restart Bledner.
-4. If you created WWMI mod before Wuthering Waves 1.0 update, follow [Modder Guide](https://github.com/SpectrumQT/WWMI-TOOLS/blob/main/guides/modder_guide.md) instead.
+4. If you created WWMI mod before Wuthering Waves 1.0 update, follow [Modder Guide](https://github.com/SpectrumQT/WWMI-TOOLS/blob/main/guides/modder_guide.md#how-to-update-wwmi-10-mod-to-11) instead.
 5. Export mod to the new folder (or backup and use existing one).
-6. Apply any desired manual tweaks to the new mod.ini and move textures.
+6. Apply desired manual tweaks to the new mod.ini and move textures.
 
 ## Known Issues
 

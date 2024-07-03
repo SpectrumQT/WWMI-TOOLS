@@ -1,14 +1,5 @@
 <h1>WWMI Tools Modder Guide</h1>
 
-<h2>How To Update WWMI 1.0 Mod to 1.1</h2>
-
-The WuWa 1.1 update has introduced huge changes into the rendering pipeline and 3d assets, to update mods that were made for 1.0 please follow the steps below:
-1. Make a new frame dump of modded object (with mod disabled!) and extract it again.
-2. Import newly extracted object into Blender (use default Merged Skeleton setting)
-3. Make changed Vertex Groups ids in your custom mesh match ones of new import (you may use [Weight Match Blender Addon](https://gamebanana.com/tools/15699) to speed up the process)
-4. Export your updated custom model as new mod into new folder (use default Merged Skeleton setting).
-5. Check textures one by one and move the ones you've edited from old to new mod folder.
-
 <h2>Frame Dump Objects Export</h2>
 
 1. Start the game with **WWMI Loader.exe**
@@ -88,7 +79,17 @@ Imported object components will appear as hash-named collection of Blender objec
 
 <h3>Vertex Colors</h3>
 
-* There are 2 color attributes (COLOR and COLOR1). Documentation TBA.
+There are 2 color attributes (COLOR and COLOR1). For uasset dumps, R and B are swapped:
+* COLOR:
+    - **R** - **Outline Mask**: Prevents outlines on certain areas from being drawn on certain angle, might be changing colors according to existing Material Functions in-game (needs more testing). 0 (black) means no draw, 1 (white) means draw.
+    - **G** - **Outline Thickness**: 0 (black) means no outline, 1 (white) means thick outlines. However, Alpha at 0 is the exact opposite of Green value.
+    - **B** - **Skin Mask**: Determines whenever the certain area is skin or not, affects colors and may be more. 0 (black) = not skin, 1 (white) = skin.
+    - **A** - **Outline Thickness**: Only affects hair so far, Material Dependant.
+* COLOR1:
+    - **R** - **Outlines Control**: not researched, set it to 0 (black).
+    - **G** - **Outlines Control**: not researched, set it to 0 (black).
+    - **B** - **Ignored**.
+    - **A** - **Ignored**.
 
 <h2>Basic WWMI Mod Export</h2>
 
@@ -121,3 +122,12 @@ Imported object components will appear as hash-named collection of Blender objec
     * Adds comments to the code in mod.ini. May be useful if you want to get idea about what's going on.
 5. Remove Temp Object:
     * Uncheck to keep temporary object built from copies of all objects of all components used for export. Primary usecase is WWMI Tools debugging.
+
+<h2>How To Update WWMI 1.0 Mod to 1.1</h2>
+
+The WuWa 1.1 update has introduced huge changes into the rendering pipeline and 3d assets, to update mods that were made for 1.0 please follow the steps below:
+1. Make a new frame dump of modded object (with mod disabled!) and extract it again.
+2. Import newly extracted object into Blender (use default Merged Skeleton setting)
+3. Make changed Vertex Groups ids in your custom mesh match ones of new import (you may use [Weight Match Blender Addon](https://gamebanana.com/tools/15699) to speed up the process)
+4. Export your updated custom model as new mod into new folder (use default Merged Skeleton setting).
+5. Check textures one by one and move the ones you've edited from old to new mod folder.
