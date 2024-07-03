@@ -4,7 +4,7 @@ from pathlib import Path
 
 bl_info = {
     "name": "WWMI Tools",
-    "version": (0, 8, 3),
+    "version": (0, 8, 4),
     "wwmi_version": (0, 6, 1),
     "blender": (2, 80, 0),
     "author": "SpectrumQT, DarkStarSword",

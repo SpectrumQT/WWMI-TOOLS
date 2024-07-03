@@ -79,13 +79,14 @@ Imported object components will appear as hash-named collection of Blender objec
 
 <h3>Vertex Colors</h3>
 
-There are 2 color attributes (COLOR and COLOR1). For uasset dumps, R and B are swapped:
-* COLOR:
+There are 2 color attributes (COLOR and COLOR1):
+* **COLOR**:
     - **R** - **Outline Mask**: Prevents outlines on certain areas from being drawn on certain angle, might be changing colors according to existing Material Functions in-game (needs more testing). 0 (black) means no draw, 1 (white) means draw.
     - **G** - **Outline Thickness**: 0 (black) means no outline, 1 (white) means thick outlines. However, Alpha at 0 is the exact opposite of Green value.
     - **B** - **Skin Mask**: Determines whenever the certain area is skin or not, affects colors and may be more. 0 (black) = not skin, 1 (white) = skin.
     - **A** - **Outline Thickness**: Only affects hair so far, Material Dependant.
-* COLOR1:
+    - For uasset dumps, R and B are swapped.
+* **COLOR1**:
     - **R** - **Outlines Control**: not researched, set it to 0 (black).
     - **G** - **Outlines Control**: not researched, set it to 0 (black).
     - **B** - **Ignored**.

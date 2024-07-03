@@ -56,19 +56,34 @@ def normalize_weights(weights):
     tickets = [0] * len(weights)
 
     for idx, weight in enumerate(weights):
+        # Ignore zero weight
         if weight == 0:
             continue
         weight = weight / total * 255
+        # Ignore weight below minimal precision (1/255)
+        if weight < 1:
+            weights[idx] = 0
+            continue
+        # Strip float part from the weight
         int_weight = int(weight)
-        precision_error -= int_weight
         weights[idx] = int_weight
+        # Reduce precision_error by the integer weight value
+        precision_error -= int_weight
+        # Calculate weight 'significance' index to prioritize lower weights with float loss
         tickets[idx] = 255 / weight * (weight - int_weight)
 
     while precision_error > 0:
-        i = tickets.index(max(tickets))
+        ticket = max(tickets)
+        if ticket > 0:
+            # Route `1` from precision_error to weights with non-zero ticket value first
+            i = tickets.index(ticket)
+            tickets[i] = 0
+        else:
+            # Route remaining precision_error to highest weight to reduce its impact
+            i = weights.index(max(weights))
+        # Distribute `1` from precision_error
         weights[i] += 1
         precision_error -= 1
-        tickets[i] = 0
 
     return weights
 

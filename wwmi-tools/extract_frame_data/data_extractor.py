@@ -75,8 +75,12 @@ class DataExtractor:
                 continue
 
             for branch_call in call_branch.calls:
-
-                self.verify_shader_hash(branch_call.call, call_branch.shader_id, 1)
+                try:
+                    self.verify_shader_hash(branch_call.call, call_branch.shader_id, 1)
+                    self.handle_shapekey_cs_2(call_branch.nested_branches)
+                except Exception as e:
+                    print(f'Warning! Failed to process Shape Key CS call {branch_call.call}, data may end up missing! (safe to ignore if no fatal errors)')
+                    continue
 
                 shape_key_data = ShapeKeyData(
                     shapekey_hash=branch_call.resources['SHAPEKEY_OUTPUT'].hash,
@@ -95,14 +99,19 @@ class DataExtractor:
                     if shape_key_data.dispatch_y != cached_shape_key_data.dispatch_y:
                         raise ValueError(f'dispatch params mismatch for SHAPEKEY_CS_1')
 
-            self.handle_shapekey_cs_2(call_branch.nested_branches)
-
     def handle_shapekey_cs_2(self, call_branches):
         for call_branch in call_branches:
             if call_branch.shader_id != 'SHAPEKEY_CS_2':
                 continue
+            outputs = 0
             for branch_call in call_branch.calls:
-                self.verify_shader_hash(branch_call.call, call_branch.shader_id, 1)
+                try:
+                    self.verify_shader_hash(branch_call.call, call_branch.shader_id, 1)
+                except Exception as e:
+                    continue
+                outputs += 1
+            if outputs == 0:
+                raise ValueError(f'No outputs for shader {call_branch.shader_id}')
             # We don't need any data from this call as well, lets just ensure that it's here
 
     def handle_static_draw_vs(self, call_branches):
