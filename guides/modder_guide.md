@@ -1,5 +1,14 @@
 <h1>WWMI Tools Modder Guide</h1>
 
+<h2>How To Update WWMI 1.0 Mod to 1.1</h2>
+
+The WuWa 1.1 update has introduced huge changes into the rendering pipeline and 3d assets, to update mods that were made for 1.0 please follow the steps below:
+1. Make a new frame dump of modded object (with mod disabled!) and extract it again.
+2. Import newly extracted object into Blender (use default Merged Skeleton setting)
+3. Make changed Vertex Groups ids in your custom mesh match ones of new import (you may use [Weight Match Blender Addon](https://gamebanana.com/tools/15699) to speed up the process)
+4. Export your updated custom model as new mod into new folder (use default Merged Skeleton setting).
+5. Check textures one by one and move the ones you've edited from old to new mod folder.
+
 <h2>Frame Dump Objects Export</h2>
 
 1. Start the game with **WWMI Loader.exe**

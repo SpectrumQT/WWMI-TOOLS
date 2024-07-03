@@ -133,8 +133,7 @@ def get_default_data_map():
                 BufferSemantic(AbstractSemantic(Semantic.RawData), DXGIFormat.R32_UINT),
             ],
             'ShapeKeyVertexOffset': [
-                BufferSemantic(AbstractSemantic(Semantic.RawData, 0), DXGIFormat.R16_FLOAT, stride=6),
-                BufferSemantic(AbstractSemantic(Semantic.RawData, 1), DXGIFormat.R16_FLOAT, stride=6),
+                BufferSemantic(AbstractSemantic(Semantic.RawData, 0), DXGIFormat.R16_FLOAT),
             ],
         },
     )
@@ -233,7 +232,7 @@ def extract_shapekey_data(loop_data, shapekeys, shapekey_data):
 
         for vertex_id, vertex_offsets in shapekey.items():
             shapekey_vertex_ids.extend([vertex_id])
-            shapekey_vertex_offsets.extend(vertex_offsets)
+            shapekey_vertex_offsets.extend(vertex_offsets + [0, 0, 0])
             shapekey_verts_count += 1
 
     return shapekey_offsets, shapekey_vertex_ids, shapekey_vertex_offsets
@@ -307,7 +306,8 @@ def blender_export(operator, context, cfg, data_map):
 
     object_merger = ObjectMerger(
         extracted_object=extracted_object,
-        ignore_hidden=cfg.ignore_hidden,
+        ignore_hidden_objects=cfg.ignore_hidden_objects,
+        ignore_muted_shape_keys=cfg.ignore_muted_shape_keys,
         apply_modifiers=cfg.apply_all_modifiers,
         context=context,
         collection=cfg.component_collection,

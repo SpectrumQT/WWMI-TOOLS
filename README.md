@@ -13,18 +13,22 @@
 
 ## For Mod Authors
 
-The 1.1 update has introduced huge changes into the rendering pipeline and 3d assets, to update mods that were made for 1.0 please follow the steps below:
-1. Update your [WWMI Tools Blender plugin to 0.8.1](https://github.com/SpectrumQT/WWMI-TOOLS/releases/tag/v0.8.1).
-2. Make a new frame dump of modded object (with mod disabled!) and extract it again.
-3. Import newly extracted object into Blender (use default Merged Skeleton setting)
-4. Make changed Vertex Groups ids in your custom mesh match ones of new import (you may use [Weight Match Blender Addon](https://gamebanana.com/tools/15699) to speed up the process)
-5. Export your updated custom model as new mod into new folder (use default Merged Skeleton setting).
-6. Check textures one by one and move the ones you've edited from old to new mod folder.
+**WWMI 0.6.1** and **WWMI Tools 0.8.2** updates resolved issues with Shape Keys (face and shoulder animations). To fix existing mods:
+1. Update **WWMI** to the [latest version](https://github.com/SpectrumQT/WWMI/releases/latest).
+2. Update **WWMI Tools** Blender plugin to the [latest version](https://github.com/SpectrumQT/WWMI-TOOLS/releases/latest).
+3. Restart Bledner.
+4. If you created WWMI mod before Wuthering Waves 1.0 update, follow [Modder Guide](https://github.com/SpectrumQT/WWMI-TOOLS/blob/main/guides/modder_guide.md) instead.
+5. Export mod to the new folder (or backup and use existing one).
+6. Apply any desired manual tweaks to the new mod.ini and move textures.
 
 ## Known Issues
-    Blurry edges on modded model during fast movement (fix: disable DLSS or FSR)
-    Glitching see-through 'white shadow' when character is behind large boss (fix: reduce Shadow Quality in Graphics Settings)
-    Shape Keys aren't (fully) loading for Jinshi and other characters (research required)
+
+- Blurry edges on modded model during fast movement (fix: disable DLSS or FSR)
+- Glitch with duplicate modded objects on screen (merged skeleton limitation)
+
+## Disclaimers  
+
+- **Alpha-1 Warning** — WWMI is in early alpha testing phase, so you can expect all kinds of issues. Also, please keep in mind that WWMI feature set and formats are not set in stone and may be subject to change.
     
 ## Features  
 
@@ -34,10 +38,6 @@ The 1.1 update has introduced huge changes into the rendering pipeline and 3d as
 - **Bones Merging** — Automatically merges VG lists merging and joins duplicates 
 - **Shape Keys Support** — Automatically handles original shape keys and supports custom ones
 - **Customizable Export** — Fast mod export engine with per-buffer export support
-
-## Disclaimers  
-
-- **Alpha-1 Warning** — WWMI is in early alpha testing phase, so you can expect all kinds of issues. Also, please keep in mind that WWMI feature set and formats are not set in stone and may be subject to change.
 
 ## How To Use
 

@@ -122,8 +122,8 @@ class WWMI_Settings(bpy.types.PropertyGroup):
 
     mirror_mesh: BoolProperty(
         name="Mirror Mesh",
-        description="Automatically mirror mesh to match actual in-game left-right",
-        default=True,
+        description="Automatically mirror mesh to match actual in-game left-right. May cause issues with some Blender tools. Can be me manually set via adding or removing '-' sign for Scale X in Transform section of Object Properties",
+        default=False,
     ) # type: ignore
 
     ########################################
@@ -135,12 +135,6 @@ class WWMI_Settings(bpy.types.PropertyGroup):
         description="Collection with WWMI object's components named like `Component 0` or `Component_1 RedHat` or `Dat Gas cOmPoNENT- 3 OMG` (lookup RegEx: r'.*component[_ -]*(\d+).*')",
         type=bpy.types.Collection,
         # default=False
-    ) # type: ignore
-    
-    ignore_hidden: BoolProperty(
-        name="Ignore Hidden Objects",
-        description="If enabled, hidden objects inside Components collection won't be exported",
-        default=False,
     ) # type: ignore
 
     mod_output_folder: StringProperty(
@@ -242,6 +236,18 @@ class WWMI_Settings(bpy.types.PropertyGroup):
     export_shapekeys: BoolProperty(
         name="Export Shape Keys Buffers",
         description="Contains shape keys data",
+        default=True,
+    ) # type: ignore
+    
+    ignore_hidden_objects: BoolProperty(
+        name="Ignore Hidden Objects",
+        description="If enabled, hidden objects inside Components collection won't be exported",
+        default=False,
+    ) # type: ignore
+    
+    ignore_muted_shape_keys: BoolProperty(
+        name="Ignore Muted Shape Keys",
+        description="If enabled, muted (unchecked) shape keys won't be exported",
         default=True,
     ) # type: ignore
 
@@ -580,13 +586,15 @@ class WWMI_TOOLS_PT_UI_PANEL(bpy.types.Panel):
         layout.row()
         
         layout.row().prop(cfg, 'component_collection')
-        layout.row().prop(cfg, 'ignore_hidden')
         layout.row().prop(cfg, 'object_source_folder')
         layout.row().prop(cfg, 'mod_output_folder')
         layout.row().prop(cfg, 'mod_skeleton_type')
 
         layout.row()
 
+        layout.row().prop(cfg, 'ignore_hidden_objects')
+        layout.row().prop(cfg, 'ignore_muted_shape_keys')
+        
         layout.row().prop(cfg, 'partial_export')
 
         if cfg.partial_export:

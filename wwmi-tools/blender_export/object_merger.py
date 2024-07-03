@@ -55,7 +55,8 @@ class ObjectMerger:
     # Input
     context: bpy.context
     extracted_object: ExtractedObject
-    ignore_hidden: bool
+    ignore_hidden_objects: bool
+    ignore_muted_shape_keys: bool
     apply_modifiers: bool
     collection: str
     skeleton_type: SkeletonType
@@ -90,7 +91,7 @@ class ObjectMerger:
 
         for obj in get_collection_objects(self.collection):
 
-            if self.ignore_hidden and object_is_hidden(obj):
+            if self.ignore_hidden_objects and object_is_hidden(obj):
                 continue
 
             if obj.name.startswith('TEMP_'):
@@ -118,14 +119,12 @@ class ObjectMerger:
 
             for temp_object in component.objects:
                 temp_obj = temp_object.object
-                # Remove ignored or unexpected vertex groups
-                if self.skeleton_type == SkeletonType.Merged:
-                    total_vg_count = sum([component.vg_count for component in self.extracted_object.components])
-                    ignore_list = [vg for vg in get_vertex_groups(temp_obj) if 'ignore' in vg.name.lower() or vg.index >= total_vg_count]
-                elif self.skeleton_type == SkeletonType.PerComponent:
-                    extracted_component = self.extracted_object.components[component_id]
-                    total_vg_count = len(extracted_component.vg_map)
-                    ignore_list = [vg for vg in get_vertex_groups(temp_obj) if 'ignore' in vg.name.lower() or vg.index >= total_vg_count]
+                # Remove muted shape keys
+                if self.ignore_muted_shape_keys and temp_obj.data.shape_keys:
+                    for shapekey_id in range(len(temp_obj.data.shape_keys.key_blocks)):
+                        sheape_key = temp_obj.data.shape_keys.key_blocks[shapekey_id]
+                        if sheape_key.mute:
+                            temp_obj.shape_key_remove(sheape_key)
                 # Apply all modifiers to temporary object
                 if self.apply_modifiers:
                     with OpenObject(self.context, temp_obj) as obj:
@@ -133,6 +132,21 @@ class ObjectMerger:
                         apply_modifiers_for_object_with_shape_keys(self.context, selected_modifiers, None)
                 # Triangulate temporary object, this step is crucial as export supports only triangles
                 triangulate_object(self.context, temp_obj)
+                # Handle Vertex Groups
+                vertex_groups = get_vertex_groups(temp_obj)
+                if self.skeleton_type == SkeletonType.Merged:
+                    # Exclude VGs with 'ignore' tag or with higher id VG count from Metadata.ini for current component
+                    total_vg_count = sum([component.vg_count for component in self.extracted_object.components])
+                    ignore_list = [vg for vg in vertex_groups if 'ignore' in vg.name.lower() or vg.index >= total_vg_count]
+                elif self.skeleton_type == SkeletonType.PerComponent:
+                    # Exclude VGs with 'ignore' tag or with higher id VG count from Metadata.ini for current component
+                    extracted_component = self.extracted_object.components[component_id]
+                    total_vg_count = len(extracted_component.vg_map)
+                    ignore_list = [vg for vg in vertex_groups if 'ignore' in vg.name.lower() or vg.index >= total_vg_count]
+                    # Rename VGs to their indicies to merge ones of different components together
+                    for vg in vertex_groups:
+                        vg.name = str(vg.index)
+                # Remove ignored or unexpected vertex groups
                 remove_vertex_groups(temp_obj, ignore_list)
                 # Calculate vertex count of temporary object
                 temp_object.vertex_count = len(temp_obj.data.vertices)

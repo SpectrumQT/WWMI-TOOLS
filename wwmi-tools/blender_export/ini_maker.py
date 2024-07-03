@@ -9,12 +9,13 @@ from ..migoto_io.blender_interface.mesh import *
 
 from ..migoto_io.buffers.byte_buffer import ByteBuffer
 
+from ..migoto_io.ini_builder.IniBuilder import IniBuilder, IniSection, SectionType, IniSectionConditional
+
 from ..extract_frame_data.metadata_format import ExtractedObject
 
 from .object_merger import MergedObject, SkeletonType
 from .metadata_collector import Version, ModInfo
 from .texture_collector import Texture
-from .ini_builder.IniBuilder import IniBuilder, IniSection, SectionType, IniSectionConditional
     
 
 def is_ini_edited(ini_path):
@@ -109,7 +110,7 @@ class IniMaker:
         self.ini.add_section(constants, 0)
 
         constants.body.add_comment(r'Allows WWMI to safely disable incompatible mod and notify user about it')
-        constants.body.add_command(r'global $required_wwmi_version = %.1f' % self.mod_info.required_wwmi_version.as_float())
+        constants.body.add_command(r'global $required_wwmi_version = %.2f' % self.mod_info.required_wwmi_version.as_float())
 
         constants.body.add_comment(r'Number of indices in original model')
         constants.body.add_command(r'global $object_guid = %d' % self.extracted_object.index_count)
@@ -176,12 +177,12 @@ class IniMaker:
             last_draw_count_if_body = last_draw_count_condition.add_if_clause('$last_draw_count == 0 && $\WWMIv1\in_character_menu')
             last_draw_count_if_body.add_command(r'$delay_load = time + 0.5')
 
-            draw_count_body.add_comment(r'Delays load of custom model for 0.5s if there were more than 1.5x time of expected draw calls')
-            draw_count_body.add_comment(r'Avoids skeleton glitch when there are more than one object with modded model on screen')
-            component_draw_count_condition = draw_count_body.add_command(IniSectionConditional())
+            # draw_count_body.add_comment(r'Delays load of custom model for 0.5s if there were more than 1.5x time of expected draw calls')
+            # draw_count_body.add_comment(r'Avoids skeleton glitch when there are more than one object with modded model on screen')
+            # component_draw_count_condition = draw_count_body.add_command(IniSectionConditional())
 
-            last_draw_count_if_body = component_draw_count_condition.add_if_clause('$draw_counter > $\WWMIv1\component_draw_calls_count')
-            last_draw_count_if_body.add_command(r'$delay_load = time + 0.5')
+            # last_draw_count_if_body = component_draw_count_condition.add_if_clause('$draw_counter > $\WWMIv1\component_draw_calls_count')
+            # last_draw_count_if_body.add_command(r'$delay_load = time + 0.5')
    
             draw_count_body.add_comment(r'Copy completed merged skeleton from previous frame to override original skeleton with it in current frame')
             copy_skeleton_condition = draw_count_body.add_command(IniSectionConditional())
@@ -443,19 +444,27 @@ class IniMaker:
 
             mod_enabled_body.add_comment(r'Skip original draw call')
             mod_enabled_body.add_command(r'handling = skip')
-            
-            mod_enabled_body.add_comment(r'Override shared resources')
-            mod_enabled_body.add_command(f'run = {replace_shared_resources.get_section_title()}')
-
-            mod_enabled_body.add_comment(r'Override textures')
-            mod_enabled_body.add_command(f'run = {replace_textures.get_section_title()}')
 
             custom_component = self.merged_object.components[component_id]
             if len(custom_component.objects) > 0:
+                
+                mod_enabled_body.add_comment(r'Override shared resources')
+                mod_enabled_body.add_command(f'run = {replace_shared_resources.get_section_title()}')
+
+                mod_enabled_body.add_comment(r'Override textures')
+                mod_enabled_body.add_command(f'run = {replace_textures.get_section_title()}')
+
                 for obj in custom_component.objects:
                     mod_enabled_body.add_persistent_comment(f'Draw {obj.name}')
                     mod_enabled_body.add_command(f'drawindexed = {obj.index_count}, {obj.index_offset}, 0')
             else:
+                
+                mod_enabled_body.add_comment(r'Override shared resources')
+                mod_enabled_body.add_persistent_comment(f'run = {replace_shared_resources.get_section_title()}')
+
+                mod_enabled_body.add_comment(r'Override textures')
+                mod_enabled_body.add_persistent_comment(f'run = {replace_textures.get_section_title()}')
+
                 mod_enabled_body.add_persistent_comment(f'Draw skipped: No matching custom components found')
 
     def make_texture_resources_group(self):
@@ -592,7 +601,7 @@ class IniMaker:
         )
         self.ini.add_section(multiply_shapekeys, 4)
         multiply_shapekeys.body.add_comment(r'Pass number of shapekeyed vertices to adjust required threads count via dipatch_y')
-        multiply_shapekeys.body.add_command(r'$\WWMIv1\shapekey_vertex_count = $shapekey_vertex_count')
+        multiply_shapekeys.body.add_command(r'$\WWMIv1\custom_vertex_count = $mesh_vertex_count')
         multiply_shapekeys.body.add_comment(r'Run custom Shape Key Multiplier CS to set deformation intensity')
         multiply_shapekeys.body.add_command(r'run = CustomShader\WWMIv1\ShapeKeyMultiplier')
 
