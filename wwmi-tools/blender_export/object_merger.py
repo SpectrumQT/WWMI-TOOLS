@@ -121,10 +121,13 @@ class ObjectMerger:
                 temp_obj = temp_object.object
                 # Remove muted shape keys
                 if self.ignore_muted_shape_keys and temp_obj.data.shape_keys:
+                    muted_shape_keys = []
                     for shapekey_id in range(len(temp_obj.data.shape_keys.key_blocks)):
-                        sheape_key = temp_obj.data.shape_keys.key_blocks[shapekey_id]
-                        if sheape_key.mute:
-                            temp_obj.shape_key_remove(sheape_key)
+                        shape_key = temp_obj.data.shape_keys.key_blocks[shapekey_id]
+                        if shape_key.mute:
+                            muted_shape_keys.append(shape_key)
+                    for shape_key in muted_shape_keys:
+                        temp_obj.shape_key_remove(shape_key)
                 # Apply all modifiers to temporary object
                 if self.apply_modifiers:
                     with OpenObject(self.context, temp_obj) as obj:
