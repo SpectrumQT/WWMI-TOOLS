@@ -213,8 +213,6 @@ class ByteBuffer:
         if self.layout.force_stride:
             data_bytes.extend(bytearray((math.ceil(len(data_bytes) / self.layout.stride)) * self.layout.stride - len(data_bytes)))
 
-
-
         num_elements = len(data_bytes) / self.layout.stride
         if num_elements % 1 != 0:
             raise ValueError(f'buffer stride {self.layout.stride} must be multiplier of bytes len {len(data_bytes)}')

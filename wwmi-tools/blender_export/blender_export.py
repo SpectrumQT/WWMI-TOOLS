@@ -120,7 +120,7 @@ def get_default_data_map():
             ]},
         VertexBuffers={
             'Position': [
-                BufferSemantic(AbstractSemantic(Semantic.Position, 0), DXGIFormat.R32_FLOAT, stride=12)
+                BufferSemantic(AbstractSemantic(Semantic.Position, 0), DXGIFormat.R32G32B32_FLOAT)
             ],
             'Blend': [
                 BufferSemantic(AbstractSemantic(Semantic.Blendindices, 0), DXGIFormat.R8_UINT, stride=4),
@@ -282,7 +282,7 @@ def build_buffers(data_map, vertex_count, faces, vertex_cache, shapekey_offsets,
         buffers[name] = vertex_buffer
 
     # Build Shape Key Buffers
-    if len(data_map.ShapeKeyBuffers) > 0 and shapekey_offsets is not None:
+    if len(data_map.ShapeKeyBuffers) > 0 and shapekey_offsets is not None and len(shapekey_vertex_ids) > 0:
         shapekey_offset_buffer = ByteBuffer(BufferElementLayout(data_map.ShapeKeyBuffers['ShapeKeyOffset']))
         shapekey_offset_buffer.extend(128)
         shapekey_offset_buffer.set_values(AbstractSemantic(Semantic.RawData), shapekey_offsets)
@@ -333,7 +333,6 @@ def blender_export(operator, context, cfg, data_map):
     mesh = merged_object.mesh
 
     # Collect merged temp object data
-
     faces, loop_data, vertex_data = get_mesh_data(context, mesh, data_map, cfg.component_collection)
 
     shapekey_offsets, shapekey_vertex_ids, shapekey_vertex_offsets = get_shapekey_data(obj, mesh, data_map, loop_data)
@@ -377,6 +376,8 @@ def blender_export(operator, context, cfg, data_map):
             buffers=buffers,
             textures=textures,
             comment_code=cfg.comment_ini,
+            skeleton_scale=cfg.skeleton_scale,
+            unrestricted_custom_shape_keys=cfg.unrestricted_custom_shape_keys,
         )
 
         with open(ini_path, "w") as f:

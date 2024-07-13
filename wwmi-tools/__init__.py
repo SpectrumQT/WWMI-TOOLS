@@ -4,8 +4,8 @@ from pathlib import Path
 
 bl_info = {
     "name": "WWMI Tools",
-    "version": (0, 8, 6),
-    "wwmi_version": (0, 6, 1),
+    "version": (0, 9, 0),
+    "wwmi_version": (0, 7, 0),
     "blender": (2, 80, 0),
     "author": "SpectrumQT, DarkStarSword",
     "location": "View3D > Sidebar > Tool Tab",

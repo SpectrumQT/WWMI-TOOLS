@@ -3,7 +3,7 @@ from pathlib import Path
 from collections import OrderedDict
 
 import bpy
-from bpy.props import BoolProperty, StringProperty, PointerProperty, IntProperty, CollectionProperty
+from bpy.props import BoolProperty, StringProperty, PointerProperty, IntProperty, FloatProperty, CollectionProperty
 
 
 from .migoto_io.blender_interface.objects import *
@@ -114,8 +114,8 @@ class WWMI_Settings(bpy.types.PropertyGroup):
         name="Skeleton",
         description="Controls the way of Vertex Groups handling",
         items=[
-            ('MERGED', 'Merged', 'Imported mesh will have unified list of Vertex Groups, allowing to weight any vertex of any component to any bone. Mod Upsides: easy to weight, advanced weighting support (i.e. long hair to cape). Mod Downsides: model will be updated with 1 frame delay, mod will pause while there are more than one of same modded object on screen. Suggested usage: new modders, character or echo mods with complex weights.'),
-            ('COMPONENT', 'Per-Component', 'Imported mesh will have its Vertex Groups split into per component lists, restricting weighting of any vertex only to its parent component. Mod Upsides: no 1-frame delay for model updates, minor performance gain. Mod downsides: hard to weight, very limited weighting options. Suggested usage: weapon mods and simple retextures.'),
+            ('MERGED', 'Merged', 'Imported mesh will have unified list of Vertex Groups, allowing to weight any vertex of any component to any bone. Mod Upsides: easy to weight, custom skeleton scale support, advanced weighting support (i.e. long hair to cape). Mod Downsides: model will be updated with 1 frame delay, mod will pause while there are more than one of same modded object on screen. Suggested usage: new modders, character or echo mods with complex weights.'),
+            ('COMPONENT', 'Per-Component', 'Imported mesh will have its Vertex Groups split into per component lists, restricting weighting of any vertex only to its parent component. Mod Upsides: no 1-frame delay for model updates, minor performance gain. Mod downsides: hard to weight, very limited weighting options, no custom skeleton scale support. Suggested usage: weapon mods and simple retextures.'),
         ],
         default=0,
     ) # type: ignore
@@ -272,6 +272,18 @@ class WWMI_Settings(bpy.types.PropertyGroup):
     comment_ini: BoolProperty(
         name="Comment INI code",
         description="Add comments to INI code, useful if you want to get better idea how it works",
+        default=False,
+    ) # type: ignore
+
+    skeleton_scale: FloatProperty(
+        name="Skeleton Scale",
+        description="Scales model in-game (default is 1.0). Not supported for Per-Component Skeleton",
+        default=1.0,
+    ) # type: ignore
+
+    unrestricted_custom_shape_keys: BoolProperty(
+        name="Unrestricted Custom Shape Keys",
+        description="Allows to use Custom Shape Keys for components that don't have them by default. Generates extra mod.ini logic",
         default=False,
     ) # type: ignore
 
@@ -617,6 +629,10 @@ class WWMI_TOOLS_PT_UI_PANEL(bpy.types.Panel):
             grid.prop(cfg, 'write_ini')
             if cfg.write_ini:
                 grid.prop(cfg, 'comment_ini')
+
+                if cfg.mod_skeleton_type == 'MERGED':
+                    layout.row().prop(cfg, 'skeleton_scale')
+                layout.row().prop(cfg, 'unrestricted_custom_shape_keys')
                 
                 layout.row()
                 layout.row().prop(cfg, 'mod_name')
