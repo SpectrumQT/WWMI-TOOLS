@@ -13,7 +13,7 @@
 
 ## For Mod Authors
 
-**WWMI 0.6.1** and **WWMI Tools 0.8.3** updates resolved issues with Shape Keys (face and shoulder animations). To fix existing mods:
+**WWMI 0.7.0** and **WWMI Tools 0.9.0** updates resolved issues with blur on movement and component glitches (esp. front hair). To fix existing mods:
 1. Update **WWMI** to the [latest version](https://github.com/SpectrumQT/WWMI/releases/latest).
 2. Update **WWMI Tools** Blender plugin to the [latest version](https://github.com/SpectrumQT/WWMI-TOOLS/releases/latest).
 3. Restart Bledner.
@@ -23,12 +23,11 @@
 
 ## Known Issues
 
-- Blurry edges on modded model during fast movement (fix: disable DLSS or FSR)
-- Glitch with duplicate modded objects on screen (merged skeleton limitation)
+- Glitch with duplicate modded objects on screen (Merged Skeleton hard limitation, won't be fixed)
 
-## Disclaimers  
+## Disclaimers
 
-- **Alpha-1 Warning** — WWMI is in early alpha testing phase, so you can expect all kinds of issues. Also, please keep in mind that WWMI feature set and formats are not set in stone and may be subject to change.
+- **Alpha-2 Warning** — WWMI is in second alpha testing phase. Feature set and formats are more or less set in stone, but you still can expect some issues here and there.
     
 ## Features  
 
