@@ -87,7 +87,7 @@ class ObjectMerger:
 
     def import_objects_from_collection(self):
         
-        component_pattern = re.compile(r'.*(?:component|part)[_ -]*(\d+).*')
+        component_pattern = re.compile(r'.*component[_ -]*(\d+).*')
 
         for obj in get_collection_objects(self.collection):
 
