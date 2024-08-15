@@ -322,7 +322,7 @@ class IniMaker:
             self.ini.add_section(merge_skeleton, 2)
        
             merge_skeleton.body.add_comment(r'Set custom scale for skeleton, changing size of the entire model')
-            merge_skeleton.body.add_command(f'$\WWMIv1\custom_mesh_scale = {self.skeleton_scale}')
+            merge_skeleton.body.add_command(r'$\WWMIv1\custom_mesh_scale = %.2f' % self.skeleton_scale)
 
             merge_skeleton.body.add_comment(r'Pass constant buffer with real bone data to copy bones from')
             merge_skeleton.body.add_command(r'cs-cb8 = ref vs-cb4')
